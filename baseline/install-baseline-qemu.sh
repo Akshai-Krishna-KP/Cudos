@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # install-baseline-qemu.sh: unattended install of the stock Ubuntu Server
-# baseline onto the 64 GB USB, by running the pinned installer ISO in a KVM
-# guest with the USB stick passed through as its only disk. Uses autoinstall
+# baseline onto the 64 GB USB. The pinned installer ISO runs in a KVM guest
+# whose only disk is a raw IMAGE FILE on the host's NVMe; the finished image is
+# then copied to the stick in one sequential pass. (Installing straight onto the
+# stick was tried first: its small-random-write speed (~0.85 MB/s) would have
+# taken 4+ hours; sequential writes run at ~8.5 MB/s.) Uses autoinstall
 # (baseline/autoinstall/user-data.in) so there are no manual steps.
 #
 # Needs: host/install-usb-access.sh run once (user can write the stick),
@@ -10,12 +13,16 @@
 #        for remote access), ~/.ssh/trackc_ed25519.pub (lab SSH key, not in Git).
 # Usage: baseline/install-baseline-qemu.sh --wipe <USB serial of 64 GB stick>
 #   The serial must be given explicitly as the "yes, erase this stick" check.
+# Env: SKIP_INSTALL=1 reuses an existing cache/baseline.img (only re-copies it).
 # Output: cache/qemu-install.log (installer serial console),
+#         cache/baseline.img (deleted after a verified copy unless KEEP_IMAGE=1),
 #         cache/baseline-credentials.txt (generated login, gitignored).
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 source "$REPO/build/versions.env"
 CACHE="$REPO/cache"; WORK="$CACHE/baseline-install"; HTTP_PORT=8642
+IMG="$CACHE/baseline.img"; IMG_GIB=27   # 1 GiB ESP + 25 GiB root + slack
+CRED="$CACHE/baseline-credentials.txt"; LOG="$CACHE/qemu-install.log"
 SERIAL_EXPECTED="03018820042024224003"   # 64 GB SanDisk Cruzer Blade
 
 [[ ${1:-} == --wipe && ${2:-} == "$SERIAL_EXPECTED" ]] \
@@ -27,6 +34,7 @@ DEV=$(readlink -f "/dev/disk/by-id/usb-SanDisk_Cruzer_Blade_${SERIAL_EXPECTED}-0
 if lsblk -no MOUNTPOINT "$DEV" | grep -q .; then echo "$DEV has mounted partitions; unmount first" >&2; exit 1; fi
 echo "Target: $DEV  $(lsblk -dno SIZE,MODEL,SERIAL,TRAN "$DEV")"
 
+if [[ ${SKIP_INSTALL:-0} != 1 ]]; then
 ISO="$CACHE/$UBUNTU_BASELINE_ISO"
 echo "$UBUNTU_BASELINE_SHA256  $ISO" | sha256sum -c --quiet -
 
@@ -35,7 +43,6 @@ rm -rf "$WORK"; mkdir -p "$WORK/http" "$WORK/stage"
 bsdtar -xf "$ISO" -C "$WORK" casper/vmlinuz casper/initrd
 
 # Generated login for the baseline (never committed).
-CRED="$CACHE/baseline-credentials.txt"
 if [[ ! -f $CRED ]]; then
   printf 'user=trackc\npassword=%s\n' "$(openssl rand -base64 12 | tr -d '/+=')" > "$CRED"
   chmod 600 "$CRED"
@@ -77,16 +84,16 @@ python3 -m http.server "$HTTP_PORT" --bind 127.0.0.1 --directory "$WORK/http" \
 HTTP_PID=$!
 trap 'kill $HTTP_PID 2>/dev/null || true; rm -rf "$WORK/stage" "$WORK/http/stage.tar"' EXIT
 
+rm -f "$IMG"; truncate -s "${IMG_GIB}G" "$IMG"
 cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$WORK/vars.fd"
-LOG="$CACHE/qemu-install.log"; : > "$LOG"
+: > "$LOG"
 echo "Installing (serial console -> $LOG). Expect 30-60 min (slow USB writes + CUDA download)."
-# cache=unsafe: host page cache absorbs dpkg's many small fsyncs on the slow
-# stick; we sync + flush the device explicitly once QEMU exits.
+# cache=unsafe: dpkg's many fsyncs go to the page cache; the image is synced after.
 qemu-system-x86_64 \
   -machine q35,accel=kvm -cpu host -smp 8 -m 8G \
   -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd \
   -drive if=pflash,format=raw,file="$WORK/vars.fd" \
-  -drive file="$DEV",format=raw,if=none,id=usb64,cache=unsafe,discard=unmap \
+  -drive file="$IMG",format=raw,if=none,id=usb64,cache=unsafe,discard=unmap \
   -device virtio-blk-pci,drive=usb64,serial=TRACKC64 \
   -cdrom "$ISO" \
   -kernel "$WORK/casper/vmlinuz" -initrd "$WORK/casper/initrd" \
@@ -94,7 +101,28 @@ qemu-system-x86_64 \
   -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
   -display none -serial file:"$LOG" -no-reboot
 
-echo "QEMU exited; flushing writes to $DEV..."
-sync; blockdev --flushbufs "$DEV" 2>/dev/null || true; sync
+sync "$IMG"
+kill $HTTP_PID 2>/dev/null || true
+fi  # SKIP_INSTALL
+
+# Did the install (incl. our late-commands) finish? The last late-command writes
+# /var/lib/trackc/esp-listing.txt into the root fs (partition 2 of the image).
+off=$(partx -g -o START -n 2 "$IMG" | tr -d ' ')
+debugfs -R "stat /var/lib/trackc/esp-listing.txt" "$IMG?offset=$((off*512))" 2>/dev/null | grep -q '^Inode:' \
+  || { echo "Install did NOT complete (marker file missing). See $LOG" >&2; exit 1; }
+echo "Install complete inside image."
+
+# Sequential copy to the stick. conv=sparse skips all-zero blocks (unused space),
+# the same idea as bmaptool; filesystems never read their free blocks.
+echo "Copying image to $DEV (sequential, only used blocks)..."
+dd if="$IMG" of="$DEV" bs=4M conv=sparse,fsync oflag=direct status=progress
+sync
+# The image's backup GPT sits at 27 GiB; move it to the real end of the stick.
+sfdisk --relocate gpt-bak-std "$DEV"
+partx -u "$DEV" 2>/dev/null || true; sleep 2
+# Verify: filesystem check (read-only) of the root partition on the stick.
+ROOTP="${DEV}2"
+e2fsck -fn "$ROOTP" && echo "Root filesystem on $ROOTP verified clean."
 lsblk -o NAME,SIZE,FSTYPE,LABEL "$DEV"
+[[ ${KEEP_IMAGE:-0} == 1 ]] || { rm -f "$IMG"; echo "Removed $IMG"; }
 echo "Done. Login: $CRED"
