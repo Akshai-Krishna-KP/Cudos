@@ -1,0 +1,54 @@
+#cloud-config
+# Ubuntu Server 24.04 autoinstall for the STOCK BASELINE on the 64 GB USB.
+# Rendered by baseline/install-baseline-qemu.sh (placeholders: __PASSWORD_HASH__, __HTTP__).
+# Stock defaults everywhere except storage (no LVM, 31 GiB left free for the
+# custom image) and the scripted NVIDIA stack in late-commands.
+autoinstall:
+  version: 1
+  interactive-sections: []
+  locale: en_US.UTF-8
+  keyboard: {layout: us}
+  source: {id: ubuntu-server}
+  network:
+    version: 2
+    ethernets:
+      wired:
+        match: {name: "en*"}
+        dhcp4: true
+        optional: true
+  identity:
+    hostname: baseline
+    username: trackc
+    password: "__PASSWORD_HASH__"
+  ssh:
+    install-server: false
+  snaps: []
+  updates: security
+  storage:
+    config:
+      # The VM sees exactly one disk with serial TRACKC64 (the USB stick).
+      - {type: disk, id: disk0, match: {serial: TRACKC64}, ptable: gpt, wipe: superblock-recursive, preserve: false}
+      - {type: partition, id: esp, device: disk0, number: 1, size: 1G, flag: boot, grub_device: true}
+      - {type: format, id: esp-fmt, volume: esp, fstype: fat32, label: ESP}
+      - {type: partition, id: root, device: disk0, number: 2, size: 25G}
+      - {type: format, id: root-fmt, volume: root, fstype: ext4, label: baseline-root}
+      - {type: mount, id: root-mnt, device: root-fmt, path: /}
+      - {type: mount, id: esp-mnt, device: esp-fmt, path: /boot/efi}
+  late-commands:
+    - mkdir -p /target/root/trackc
+    - sh -c 'wget -qO- __HTTP__/stage.tar || curl -fsS __HTTP__/stage.tar' | tar -x -C /target/root/trackc
+    - curtin in-target --target=/target -- bash /root/trackc/install-nvidia-stack.sh /root/trackc
+    - curtin in-target --target=/target -- mkdir -p /opt/trackc /etc/trackc /var/lib/trackc
+    - curtin in-target --target=/target -- /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o /opt/trackc/vector_add /root/trackc/vector_add.cu
+    - install -m 0755 /target/root/trackc/phase0-gate.sh /target/opt/trackc/phase0-gate.sh
+    - install -m 0644 /target/root/trackc/trackc-phase0-gate.service /target/etc/systemd/system/trackc-phase0-gate.service
+    - curtin in-target --target=/target -- systemctl enable trackc-phase0-gate.service
+    - touch /target/etc/trackc/auto-poweroff
+    # Removable-media fallback loader so the stick boots on any UEFI laptop
+    # without an NVRAM entry. fbx64.efi deliberately NOT copied: it would write
+    # a boot entry into the laptop's firmware.
+    - sh -c 'mkdir -p /target/boot/efi/EFI/BOOT && cp /target/boot/efi/EFI/ubuntu/shimx64.efi /target/boot/efi/EFI/BOOT/BOOTX64.EFI && cp /target/boot/efi/EFI/ubuntu/grubx64.efi /target/boot/efi/EFI/ubuntu/mmx64.efi /target/boot/efi/EFI/BOOT/'
+    - sh -c 'rm -f /target/boot/efi/EFI/BOOT/fbx64.efi'
+    - sh -c 'curtin in-target --target=/target -- dpkg -l > /target/var/lib/trackc/baseline-dpkg-l.txt'
+    - sh -c 'ls -la /target/boot/efi/EFI/*/ > /target/var/lib/trackc/esp-listing.txt'
+  shutdown: poweroff

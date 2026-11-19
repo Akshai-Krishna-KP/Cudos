@@ -1,0 +1,12 @@
+[Unit]
+Description=Track C Phase 0 gate (nvidia-smi + CUDA sample)
+After=multi-user.target systemd-modules-load.service
+ConditionVirtualization=no
+
+[Service]
+Type=oneshot
+ExecStart=/opt/trackc/phase0-gate.sh
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
