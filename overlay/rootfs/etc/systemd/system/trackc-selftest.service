@@ -1,0 +1,11 @@
+[Unit]
+Description=Track C read-only root self-test
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/trackc-selftest
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

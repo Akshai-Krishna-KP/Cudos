@@ -1,0 +1,43 @@
+#!/bin/sh
+# trackc-rootfs: runs in the initramfs after the squashfs root is mounted
+# read-only at ${rootmnt}, before switch_root. Sets up the writable layers:
+#   /etc   overlay, upper on tmpfs  -> config changes are lost at reboot (immutable config)
+#   /var   overlay, upper on persist partition -> logs, containers, results survive
+#   /home  overlay, upper on persist, nodev,nosuid,noexec
+# Persist partition = ext4 labelled TRACKC_PERSIST. If missing, falls back to
+# tmpfs (fully volatile) and says so on the console.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+. /scripts/functions
+
+modprobe overlay
+S=/run/trackc
+mkdir -p "$S/persist" "$S/volatile"
+mount -t tmpfs -o mode=0755,nodev,nosuid tmpfs "$S/volatile"
+
+dev=/dev/disk/by-label/TRACKC_PERSIST
+i=0; while [ ! -e "$dev" ] && [ $i -lt 50 ]; do sleep 0.1; i=$((i+1)); done
+if [ -e "$dev" ] && mount -t ext4 -o nodev,nosuid,noatime "$dev" "$S/persist"; then
+  log_success_msg "trackc: persist partition mounted"
+  echo persistent > "$S/mode"
+else
+  log_warning_msg "trackc: no TRACKC_PERSIST partition, using volatile tmpfs"
+  mount -t tmpfs -o mode=0755,nodev,nosuid tmpfs "$S/persist"
+  echo volatile > "$S/mode"
+fi
+
+# ovl <dir> <upper-base> [extra mount options]
+ovl() {
+  mkdir -p "$2/$1/upper" "$2/$1/work"
+  mount -t overlay -o "lowerdir=${rootmnt}/$1,upperdir=$2/$1/upper,workdir=$2/$1/work${3:+,$3}" \
+    overlay "${rootmnt}/$1" || panic "trackc: overlay for /$1 failed"
+}
+ovl etc  "$S/volatile"
+ovl var  "$S/persist"
+ovl home "$S/persist" nodev,nosuid,noexec
+
+# Stable machine-id across reboots (journal, systemd), kept on persist.
+[ -s "$S/persist/machine-id" ] || cat /proc/sys/kernel/random/uuid | tr -d '-' > "$S/persist/machine-id"
+cp "$S/persist/machine-id" "${rootmnt}/etc/machine-id"
+exit 0

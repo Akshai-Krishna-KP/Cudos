@@ -1,0 +1,28 @@
+#!/bin/sh
+# trackc-selftest: boot-time health check of the read-only root design.
+# Prints "TRACKC-SELFTEST <check> PASS|FAIL" to the console and journal, so the
+# QEMU smoke test (test/qemu-smoke.sh) and a human can both read it.
+fail=0
+check() { name=$1; shift; if "$@" >/dev/null 2>&1; then echo "TRACKC-SELFTEST $name PASS"; else echo "TRACKC-SELFTEST $name FAIL"; fail=1; fi; }
+opts() { findmnt -no OPTIONS "$1" | tr ',' '\n'; }
+has() { opts "$1" | grep -qx "$2"; }
+
+check root-is-squashfs   test "$(findmnt -no FSTYPE /)" = squashfs
+check root-mounted-ro    has / ro
+check root-write-refused sh -c '! touch /.trackc-probe 2>/dev/null'
+check etc-overlay        test "$(findmnt -no FSTYPE /etc)" = overlay
+check var-overlay        test "$(findmnt -no FSTYPE /var)" = overlay
+check persist-mode       test "$(cat /run/trackc/mode)" = persistent
+for m in /tmp /var/tmp /home; do
+  for o in nodev nosuid noexec; do check "$m:$o" has "$m" "$o"; done
+done
+
+# Persistence across reboots: boot counter on /var (persist partition).
+mkdir -p /var/lib/trackc
+n=$(cat /var/lib/trackc/boot-count 2>/dev/null || echo 0); n=$((n+1))
+echo "$n" > /var/lib/trackc/boot-count; sync
+echo "TRACKC-SELFTEST boot-count $n"
+
+echo "TRACKC-SELFTEST mounts:"; findmnt -rno TARGET,FSTYPE,OPTIONS / /etc /var /home /tmp /var/tmp | sed 's/^/TRACKC-SELFTEST   /'
+[ $fail -eq 0 ] && echo "TRACKC-SELFTEST RESULT PASS" || echo "TRACKC-SELFTEST RESULT FAIL"
+exit $fail

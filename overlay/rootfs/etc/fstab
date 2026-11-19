@@ -1,0 +1,5 @@
+# Root is the read-only squashfs; /etc, /var, /home are overlays set up in the
+# initramfs (scripts/init-bottom/trackc-rootfs). Never remount / rw.
+/dev/disk/by-partlabel/trackc-root  /         squashfs  ro,defaults                    0 0
+tmpfs                               /tmp      tmpfs     nodev,nosuid,noexec,mode=1777  0 0
+tmpfs                               /var/tmp  tmpfs     nodev,nosuid,noexec,mode=1777  0 0

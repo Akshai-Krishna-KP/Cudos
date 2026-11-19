@@ -1,0 +1,10 @@
+# Packages added on top of mmdebstrap --variant=minbase (Essential + apt).
+# One per line; comments explain why each is needed (feeds the report).
+systemd           # init (trimmed later in Phase 6)
+systemd-sysv      # /sbin/init -> systemd
+udev              # device nodes, /dev/disk/by-label for the persist partition
+linux-image-amd64 # Phase 2 only: Debian kernel; replaced by our LTS kernel in Phase 3
+initramfs-tools   # builds the initrd that mounts squashfs + overlays
+busybox           # initramfs shell/mount (overlay options), ~1 MB
+zstd              # initrd compression
+kmod              # modprobe

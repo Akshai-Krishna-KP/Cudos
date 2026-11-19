@@ -1,0 +1,4 @@
+# Needed before switch_root: the root is a squashfs, writable state is overlayfs.
+squashfs
+overlay
+ext4
