@@ -24,7 +24,7 @@ University OS Lab group assignment: **"Application-Specific Linux Distribution f
 
 ## Hardware and lab environment
 - **Laptop 1 (primary build and test host):** Intel Core i7 HX, NVIDIA RTX 4050 Laptop (Ada, sm_89), **CachyOS** (dual boot).
-  - Host facts: 20 threads, ~23 GB RAM, host driver 620.70.06. Docker and QEMU installed; Podman and f3 to be installed (`sudo pacman -S podman f3`).
+  - Host facts: 20 threads, ~23 GB RAM, host driver 620.70.06. Docker, QEMU, Podman 6.2.0 and f3 installed.
   - **Only ~28 GB free on `/home`.** Keep build scratch small and cleanable (kernel `make clean`, prune images); check `df -h` before large steps.
 - **Laptop 2 (external validation only):** AMD Ryzen, NVIDIA RTX 4060 Laptop (Ada, sm_89), **Windows 11** (dual boot). **Not available during development.** All Laptop-2 gates are deferred to Phase 8.
 - **Media: 64 GB USB** (SanDisk Cruzer Blade, main dev/measurement drive) **+ 8 GB USB** ("Flash Disk", 7.4 GiB).
