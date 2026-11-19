@@ -21,6 +21,7 @@ autoinstall:
     username: trackc
     password: "__PASSWORD_HASH__"
   ssh:
+    # Installed by late-commands (install-remote-access.sh) with key-only config.
     install-server: false
   snaps: []
   updates: security
@@ -38,12 +39,12 @@ autoinstall:
     - mkdir -p /target/root/trackc
     - sh -c 'wget -qO- __HTTP__/stage.tar || curl -fsS __HTTP__/stage.tar' | tar -x -C /target/root/trackc
     - curtin in-target --target=/target -- bash /root/trackc/install-nvidia-stack.sh /root/trackc
+    - curtin in-target --target=/target -- bash /root/trackc/install-remote-access.sh /root/trackc
     - curtin in-target --target=/target -- mkdir -p /opt/trackc /etc/trackc /var/lib/trackc
     - curtin in-target --target=/target -- /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o /opt/trackc/vector_add /root/trackc/vector_add.cu
     - install -m 0755 /target/root/trackc/phase0-gate.sh /target/opt/trackc/phase0-gate.sh
     - install -m 0644 /target/root/trackc/trackc-phase0-gate.service /target/etc/systemd/system/trackc-phase0-gate.service
     - curtin in-target --target=/target -- systemctl enable trackc-phase0-gate.service
-    - touch /target/etc/trackc/auto-poweroff
     # Removable-media fallback loader so the stick boots on any UEFI laptop
     # without an NVRAM entry. fbx64.efi deliberately NOT copied: it would write
     # a boot entry into the laptop's firmware.
@@ -51,4 +52,6 @@ autoinstall:
     - sh -c 'rm -f /target/boot/efi/EFI/BOOT/fbx64.efi'
     - sh -c 'curtin in-target --target=/target -- dpkg -l > /target/var/lib/trackc/baseline-dpkg-l.txt'
     - sh -c 'ls -la /target/boot/efi/EFI/*/ > /target/var/lib/trackc/esp-listing.txt'
+    # Do not leave the Wi-Fi password in the staging copy (live copy is in /etc/netplan, 0600).
+    - rm -f /target/root/trackc/60-trackc-wifi.yaml
   shutdown: poweroff

@@ -27,7 +27,8 @@ University OS Lab group assignment: **"Application-Specific Linux Distribution f
   - Host facts: 20 threads, ~23 GB RAM, host driver 620.70.06. Docker, QEMU, Podman 6.2.0 and f3 installed.
   - Host change (approved by user): udev rule `/etc/udev/rules.d/99-trackc-usb.rules` from `host/install-usb-access.sh` gives the user write access to the two project sticks only. Secure Boot is off.
   - **Only ~28 GB free on `/home`.** Keep build scratch small and cleanable (kernel `make clean`, prune images); check `df -h` before large steps.
-- **Laptop 2 (external validation only):** AMD Ryzen, NVIDIA RTX 4060 Laptop (Ada, sm_89), **Windows 11** (dual boot). **Not available during development.** All Laptop-2 gates are deferred to Phase 8.
+- **Laptop 2 (remote test target):** AMD Ryzen, NVIDIA RTX 4060 Laptop (Ada, sm_89), **Windows 11** (dual boot). Boots the USB stick; Claude Code on Laptop 1 drives it over SSH via a **phone hotspot** (`ssh -i ~/.ssh/trackc_ed25519 trackc@baseline.local`). User only handles firmware/F12; next-boot selection via `grub-reboot` on the stick (never NVRAM). Back up its BitLocker key before any BIOS change.
+  - Lab remote access (SSH key-only, Wi-Fi, NOPASSWD sudo) is a **documented deviation**: present on the baseline and on *dev* builds of the custom image only, excluded from the release image and accounted for in measurements.
 - **Media: 64 GB USB** (SanDisk Cruzer Blade, main dev/measurement drive) **+ 8 GB USB** ("Flash Disk", 7.4 GiB).
   - 8 GB: first used as the Ubuntu Server installer stick (Phase 0), later as the release-candidate drive for the graded image (ESP + squashfs root + small persist).
   - 64 GB planned GPT layout:

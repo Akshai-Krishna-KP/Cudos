@@ -6,6 +6,8 @@
 #
 # Needs: host/install-usb-access.sh run once (user can write the stick),
 #        cached ISO from baseline/phase0-prep.sh, qemu, OVMF, bsdtar, openssl.
+#        cache/wifi.env with WIFI_SSID=... and WIFI_PASSWORD=... (gitignored; hotspot
+#        for remote access), ~/.ssh/trackc_ed25519.pub (lab SSH key, not in Git).
 # Usage: baseline/install-baseline-qemu.sh --wipe <USB serial of 64 GB stick>
 #   The serial must be given explicitly as the "yes, erase this stick" check.
 # Output: cache/qemu-install.log (installer serial console),
@@ -48,12 +50,31 @@ cp "$REPO/baseline/autoinstall/meta-data" "$WORK/http/meta-data"
 cp "$REPO/build/versions.env" "$REPO/baseline/install-nvidia-stack.sh" \
    "$REPO/baseline/phase0-gate.sh" "$REPO/baseline/trackc-phase0-gate.service" \
    "$REPO/benchmark/samples/vector_add.cu" "$WORK/stage/"
+cp "$REPO/baseline/install-remote-access.sh" "$WORK/stage/"
+cp "$HOME/.ssh/trackc_ed25519.pub" "$WORK/stage/authorized_keys"
+# shellcheck source=/dev/null
+source "$CACHE/wifi.env"
+: "${WIFI_SSID:?set in cache/wifi.env}" "${WIFI_PASSWORD:?set in cache/wifi.env}"
+python3 - "$WIFI_SSID" "$WIFI_PASSWORD" > "$WORK/stage/60-trackc-wifi.yaml" <<'PY'
+import json, sys
+ssid, pw = sys.argv[1], sys.argv[2]
+# JSON strings are valid YAML scalars, so quoting is always safe.
+print(f'''network:
+  version: 2
+  wifis:
+    wlan:
+      match: {{name: "wl*"}}
+      dhcp4: true
+      optional: true
+      access-points:
+        {json.dumps(ssid)}: {{password: {json.dumps(pw)}}}''')
+PY
 tar -C "$WORK/stage" -cf "$WORK/http/stage.tar" .
 
 python3 -m http.server "$HTTP_PORT" --bind 127.0.0.1 --directory "$WORK/http" \
   > "$WORK/http.log" 2>&1 &
 HTTP_PID=$!
-trap 'kill $HTTP_PID 2>/dev/null || true' EXIT
+trap 'kill $HTTP_PID 2>/dev/null || true; rm -rf "$WORK/stage" "$WORK/http/stage.tar"' EXIT
 
 cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$WORK/vars.fd"
 LOG="$CACHE/qemu-install.log"; : > "$LOG"
