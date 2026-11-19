@@ -27,12 +27,14 @@ University OS Lab group assignment: **"Application-Specific Linux Distribution f
   - Host facts: 20 threads, ~23 GB RAM, host driver 620.70.06. Docker and QEMU installed; Podman and f3 to be installed (`sudo pacman -S podman f3`).
   - **Only ~28 GB free on `/home`.** Keep build scratch small and cleanable (kernel `make clean`, prune images); check `df -h` before large steps.
 - **Laptop 2 (external validation only):** AMD Ryzen, NVIDIA RTX 4060 Laptop (Ada, sm_89), **Windows 11** (dual boot). **Not available during development.** All Laptop-2 gates are deferred to Phase 8.
-- **Media: a single 64 GB USB** (SanDisk Cruzer Blade). No 8 GB / 32 GB drives. Planned GPT layout:
-  1. ESP (~1 GB, shared boot menu for baseline and custom image)
-  2. Stock Ubuntu Server 24.04 baseline root (~25 GB)
-  3. Custom image: squashfs root, **budget ≤ 8 GB** so the graded image would still fit an 8 GB stick
-  4. Persist partition for the custom image (rest)
-  Baseline and custom image share one medium, so boot-time comparisons are fair.
+- **Media: 64 GB USB** (SanDisk Cruzer Blade, main dev/measurement drive) **+ 8 GB USB** ("Flash Disk", 7.4 GiB).
+  - 8 GB: first used as the Ubuntu Server installer stick (Phase 0), later as the release-candidate drive for the graded image (ESP + squashfs root + small persist).
+  - 64 GB planned GPT layout:
+    1. ESP (~1 GB, shared boot menu for baseline and custom image)
+    2. Stock Ubuntu Server 24.04 baseline root (~25 GB)
+    3. Custom image: squashfs root, **budget ≤ 8 GB** so the graded image would still fit an 8 GB stick
+    4. Persist partition for the custom image (rest)
+    Baseline and custom image share one medium, so boot-time comparisons are fair.
 - Both GPUs are Ada, so **target sm_89 only**.
 
 ## Safety rules (read carefully)
@@ -91,7 +93,7 @@ Do **not** start a phase until the previous gate is passed and the user approves
 
 | Phase | Work | Gate |
 |---|---|---|
-| 0. Setup | Podman build env on CachyOS, `f3` check on the 64 GB USB, Ubuntu baseline on the 64 GB USB (BitLocker backup deferred to Phase 8) | Baseline boots and runs `nvidia-smi` + a CUDA sample |
+| 0. Setup | Podman build env on CachyOS, `f3` check on both USBs, Ubuntu baseline on the 64 GB USB (BitLocker backup deferred to Phase 8) | Baseline boots and runs `nvidia-smi` + a CUDA sample |
 | 1. Baseline measurements | Record all metrics for stock | Baseline numbers saved by scripts |
 | 2. Minimal bootable rootfs | debootstrap + squashfs + overlayfs, boots in QEMU | Reaches login in QEMU; read-only root confirmed |
 | 3. Custom kernel | localmodconfig, trim, boot on real hardware | Boots on Laptop 1 (Laptop 2 in Phase 8); size/boot deltas recorded |
@@ -144,4 +146,4 @@ Do **not** start a phase until the previous gate is passed and the user approves
 7. Is a third (RTX 4070) laptop available as an extra test target?
 
 ## Definition of done
-Bootable image (≤ 8 GB budget, on the 64 GB USB), Git repo that rebuilds it from scratch, script-generated comparison tables vs. stock, technical report, licence inventory, and a live + recorded demo of the containerised CUDA benchmark with live metrics.
+Bootable image on the 8 GB USB (also on the 64 GB for measurements), Git repo that rebuilds it from scratch, script-generated comparison tables vs. stock, technical report, licence inventory, and a live + recorded demo of the containerised CUDA benchmark with live metrics.
