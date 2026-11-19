@@ -31,4 +31,6 @@ apt-mark hold nvidia-open "$CUDA_TOOLKIT_PKG" nvidia-container-toolkit >/dev/nul
 
 # DKMS status for the record (build happens per installed kernel).
 dkms status || true
+# Drop downloaded .debs, as a normal admin would; keeps the size comparison fair.
+apt-get clean
 echo "install-nvidia-stack: done"

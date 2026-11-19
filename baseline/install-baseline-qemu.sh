@@ -55,6 +55,11 @@ sed -e "s|__PASSWORD_HASH__|$HASH|" -e "s|__HTTP__|$HTTP|g" \
   "$REPO/baseline/autoinstall/user-data.in" > "$WORK/http/user-data"
 cp "$REPO/baseline/autoinstall/meta-data" "$WORK/http/meta-data"
 : > "$WORK/http/vendor-data"   # cloud-init polls for it; empty = none
+# Prefetched .debs (baseline/prefetch-debs.sh), served to the VM over the local link.
+ln -s "$CACHE/debs" "$WORK/http/debs"
+( cd "$CACHE/debs" && ls -1 -- *.deb 2>/dev/null ) > "$WORK/http/debs.txt" || true
+echo "Seeding $(wc -l < "$WORK/http/debs.txt") prefetched .debs"
+
 cp "$REPO/build/versions.env" "$REPO/baseline/install-nvidia-stack.sh" \
    "$REPO/baseline/phase0-gate.sh" "$REPO/baseline/trackc-phase0-gate.service" \
    "$REPO/benchmark/samples/vector_add.cu" "$WORK/stage/"

@@ -31,4 +31,5 @@ if [[ -f $SRC/60-trackc-wifi.yaml ]]; then
   install -m 0600 "$SRC/60-trackc-wifi.yaml" /etc/netplan/60-trackc-wifi.yaml
 fi
 systemctl enable ssh avahi-daemon
+apt-get clean
 echo "install-remote-access: done"

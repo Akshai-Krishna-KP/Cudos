@@ -38,6 +38,9 @@ autoinstall:
   late-commands:
     - mkdir -p /target/root/trackc
     - sh -c 'wget -qO- __HTTP__/stage.tar || curl -fsS __HTTP__/stage.tar' | tar -x -C /target/root/trackc
+    # Seed apt's cache with .debs prefetched on the host (baseline/prefetch-debs.sh).
+    # apt still verifies each one against the signed indexes; missing ones are downloaded.
+    - sh -c 'mkdir -p /target/var/cache/apt/archives && cd /target/var/cache/apt/archives && wget -qO /tmp/debs.txt __HTTP__/debs.txt && while read -r f; do u=$(printf %s "$f" | sed "s/%/%25/g"); wget -qO "$f" "__HTTP__/debs/$u" || { rm -f "$f"; echo "seed miss $f"; }; done < /tmp/debs.txt; echo "seeded $(ls *.deb | wc -l) debs"'
     - curtin in-target --target=/target -- bash /root/trackc/install-nvidia-stack.sh /root/trackc
     - curtin in-target --target=/target -- bash /root/trackc/install-remote-access.sh /root/trackc
     - curtin in-target --target=/target -- mkdir -p /opt/trackc /etc/trackc /var/lib/trackc
