@@ -28,7 +28,10 @@ while :; do
     IFS='|' read -r m p l <<<"$s"
     if tr -d '\r' < "$LOG" | grep -aqE -- "$m"; then pct=$p; label=$l; fi
   done
-  qpid=$(pgrep -f "qemu-system-x86_64.*TRACKC64" | head -1)
+  # current sub-step (last "start:" line), e.g. "installing kernel"
+  sub=$(tr -d '\r' < "$LOG" | grep -a '^start:' | grep -v status_GET | tail -1 | sed 's/.*: //' | cut -c1-40)
+  [[ -n $sub ]] && label="$label > $sub"
+  qpid=$(pgrep -f "qemu-system-x86_64 -machine.*TRACKC64" | head -1)
   if [[ -n $qpid ]]; then
     wbytes=$(awk '/^wchar:/{print $2}' "/proc/$qpid/io" 2>/dev/null || echo 0)
     if [[ $pct -eq 45 ]]; then
