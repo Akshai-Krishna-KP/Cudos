@@ -1,0 +1,2 @@
+# 2026-11-19T17:04:17+05:30   7.4G Flash Disk CCYYMMDDHHmmSSBLOUZ7
+# ABORTED by user at 2026-11-19T17:26:43+05:30: random-write phase ~0.65 blocks/s (401 blocks in ~13 min), est. 45+ min remaining. f3probe check of sdb NOT completed.

@@ -1,0 +1,26 @@
+# 2026-11-19T17:00:06+05:30  57.3G Cruzer Blade 03018820042024224003
+F3 probe 10.0
+Copyright (C) 2010 Digirati Internet LTDA.
+This is free software; see the source for copying conditions.
+
+WARNING: Probing normally takes from a few seconds to 15 minutes, but
+         it can take longer. Please be patient.
+
+Good news: The device `/dev/sda' is the real thing
+
+Device geometry:
+	         *Usable* size: 57.30 GB (120164352 blocks)
+	        Announced size: 57.30 GB (120164352 blocks)
+	                Module: 64.00 GB (2^36 Bytes)
+	Approximate cache size: 0.00 Bytes (0 blocks)
+	   Physical block size: 512.00 Bytes (2^9 Bytes)
+
+I/O average speeds:
+	Sequential write: 8.51 MB/s (4194310 blocks / 4')
+	    Random write: 134.54 KB/s (2225 blocks / 8.26s)
+	     Random read: 666.18 KB/s (3391 blocks / 2.54s)
+
+Probe time: 4'11"
+ Operation: total time / blocks = avg time
+      Read: 2.54s / 3391 = 749.3us
+     Write: 4'08" / 4196535 = 59.0us

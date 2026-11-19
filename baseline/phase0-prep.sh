@@ -10,6 +10,11 @@
 # Usage (run as your normal user from the repo root; it calls sudo itself):
 #   baseline/phase0-prep.sh /dev/sda /dev/sdb
 #   arg1 = 64 GB dev drive, arg2 = 8 GB installer / release drive
+#
+# Env:
+#   SKIP_F3=1   skip step 1 (e.g. f3probe already done, or the stick's random
+#               writes are too slow; the dd + cmp verify still checks the
+#               region the ISO occupies).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -40,7 +45,7 @@ echo "== Devices =="
 lsblk -o NAME,SIZE,MODEL,TRAN,MOUNTPOINT
 check_usb "$DEV64" 50 64
 check_usb "$DEV8"  6  8
-read -r -p "Both $DEV64 and $DEV8 will be COMPLETELY ERASED. Type 'yes' to continue: " ans
+read -r -p "$DEV8 (and $DEV64 unless SKIP_F3=1) will be COMPLETELY ERASED. Type 'yes' to continue: " ans
 [[ $ans == yes ]] || die "aborted"
 
 sudo -v  # ask for the password once up front
@@ -55,7 +60,9 @@ unmount_all() {
 }
 
 echo "== Step 1/3: f3probe (destructive) =="
+[[ ${SKIP_F3:-0} == 1 ]] && echo "SKIP_F3=1: skipping f3probe"
 for dev in "$DEV64" "$DEV8"; do
+  [[ ${SKIP_F3:-0} == 1 ]] && break
   unmount_all "$dev"
   name=$(basename "$dev")
   out="$RESULTS/f3probe-${name}-$(lsblk -dbno SIZE "$dev")B.txt"
