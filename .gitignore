@@ -1,0 +1,16 @@
+# Large downloads and build outputs: fetched or rebuilt by scripts, never committed
+cache/
+out/
+*.iso
+*.img
+*.squashfs
+*.efi
+*.run
+vmlinuz*
+*.ko
+# Signing keys: regenerate with the documented script
+*.pem
+*.key
+*.der
+*.x509
+signing_key*
