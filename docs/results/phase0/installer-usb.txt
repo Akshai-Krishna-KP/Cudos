@@ -1,0 +1,2 @@
+# 2026-11-19T18:06:17+05:30
+iso=ubuntu-24.04.5-live-server-amd64.iso sha256=97f3d7ffb032c3eb3b23d2c8be9cc76e60c2c1f2c0146ba5ba9fe01cafae0fd8 written_to=/dev/sdb verified=yes
