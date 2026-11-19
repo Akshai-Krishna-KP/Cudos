@@ -1,0 +1,17 @@
+/target/boot/efi/EFI/BOOT/:
+total 4396
+drwxr-xr-x 2 root root    4096 Nov 19 20:02 .
+drwxr-xr-x 4 root root    4096 Nov 19 19:57 ..
+-rwxr-xr-x 1 root root  966664 Nov 19 20:02 BOOTX64.EFI
+-rwxr-xr-x 1 root root 2660232 Nov 19 20:02 grubx64.efi
+-rwxr-xr-x 1 root root  856280 Nov 19 20:02 mmx64.efi
+
+/target/boot/efi/EFI/ubuntu/:
+total 4404
+drwxr-xr-x 2 root root    4096 Nov 19 19:57 .
+drwxr-xr-x 4 root root    4096 Nov 19 19:57 ..
+-rwxr-xr-x 1 root root     108 Nov 19 19:57 BOOTX64.CSV
+-rwxr-xr-x 1 root root     117 Nov 19 19:57 grub.cfg
+-rwxr-xr-x 1 root root 2660232 Nov 19 19:57 grubx64.efi
+-rwxr-xr-x 1 root root  856280 Nov 19 19:57 mmx64.efi
+-rwxr-xr-x 1 root root  966664 Nov 19 19:57 shimx64.efi
