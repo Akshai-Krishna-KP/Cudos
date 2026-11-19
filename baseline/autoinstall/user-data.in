@@ -31,20 +31,24 @@ autoinstall:
       - {type: disk, id: disk0, match: {serial: TRACKC64}, ptable: gpt, wipe: superblock-recursive, preserve: false}
       - {type: partition, id: esp, device: disk0, number: 1, size: 1G, flag: boot, grub_device: true}
       - {type: format, id: esp-fmt, volume: esp, fstype: fat32, label: ESP}
-      - {type: partition, id: root, device: disk0, number: 2, size: 25G}
+      - {type: partition, id: root, device: disk0, number: 2, size: 35G}
       - {type: format, id: root-fmt, volume: root, fstype: ext4, label: baseline-root}
       - {type: mount, id: root-mnt, device: root-fmt, path: /}
       - {type: mount, id: esp-mnt, device: esp-fmt, path: /boot/efi}
   late-commands:
     - mkdir -p /target/root/trackc
     - sh -c 'wget -qO- __HTTP__/stage.tar || curl -fsS __HTTP__/stage.tar' | tar -x -C /target/root/trackc
-    # Seed apt's cache with .debs prefetched on the host (baseline/prefetch-debs.sh).
-    # apt still verifies each one against the signed indexes; missing ones are downloaded.
-    - sh -c 'mkdir -p /target/var/cache/apt/archives && cd /target/var/cache/apt/archives && wget -qO /tmp/debs.txt __HTTP__/debs.txt && while read -r f; do u=$(printf %s "$f" | sed "s/%/%25/g"); wget -qO "$f" "__HTTP__/debs/$u" || { rm -f "$f"; echo "seed miss $f"; }; done < /tmp/debs.txt; echo "seeded $(ls *.deb | wc -l) debs"'
-    - curtin in-target --target=/target -- bash /root/trackc/install-nvidia-stack.sh /root/trackc
-    - curtin in-target --target=/target -- bash /root/trackc/install-remote-access.sh /root/trackc
+    # Seed apt's cache with .debs prefetched on the host (baseline/prefetch-debs.sh),
+    # shared read-only into the VM via virtio-9p and overlaid onto apt's cache dir
+    # (nothing copied onto the disk). apt still verifies every .deb against the
+    # signed indexes; anything missing is downloaded as usual.
+    - sh -c 'modprobe 9pnet_virtio; mkdir -p /run/debs /target/var/cache/apt/archives /target/var/tmp/apt-up /target/var/tmp/apt-wk && mount -t 9p -o trans=virtio,version=9p2000.L,ro debs /run/debs && mount -t overlay -o lowerdir=/run/debs,upperdir=/target/var/tmp/apt-up,workdir=/target/var/tmp/apt-wk overlay /target/var/cache/apt/archives && echo "seeded $(ls /target/var/cache/apt/archives/*.deb | wc -l) debs" > /dev/ttyS0 || echo "seed FAILED, apt will download" > /dev/ttyS0'
+    # Output also goes to the serial console (cache/qemu-install.log on the host).
+    - bash -c 'set -o pipefail; curtin in-target --target=/target -- bash /root/trackc/install-nvidia-stack.sh /root/trackc 2>&1 | tee /dev/ttyS0'
+    - sh -c 'umount /target/var/cache/apt/archives; umount /run/debs; rm -rf /target/var/tmp/apt-up /target/var/tmp/apt-wk; true'
+    - bash -c 'set -o pipefail; curtin in-target --target=/target -- bash /root/trackc/install-remote-access.sh /root/trackc 2>&1 | tee /dev/ttyS0'
     - curtin in-target --target=/target -- mkdir -p /opt/trackc /etc/trackc /var/lib/trackc
-    - curtin in-target --target=/target -- /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o /opt/trackc/vector_add /root/trackc/vector_add.cu
+    - bash -c 'set -o pipefail; curtin in-target --target=/target -- /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o /opt/trackc/vector_add /root/trackc/vector_add.cu 2>&1 | tee /dev/ttyS0'
     - install -m 0755 /target/root/trackc/phase0-gate.sh /target/opt/trackc/phase0-gate.sh
     - install -m 0644 /target/root/trackc/trackc-phase0-gate.service /target/etc/systemd/system/trackc-phase0-gate.service
     - curtin in-target --target=/target -- systemctl enable trackc-phase0-gate.service
@@ -57,4 +61,6 @@ autoinstall:
     - sh -c 'ls -la /target/boot/efi/EFI/*/ > /target/var/lib/trackc/esp-listing.txt'
     # Do not leave the Wi-Fi password in the staging copy (live copy is in /etc/netplan, 0600).
     - rm -f /target/root/trackc/60-trackc-wifi.yaml
+    - sh -c 'curtin in-target --target=/target -- fstrim -v / > /dev/ttyS0 2>&1; true'
+    - sh -c 'echo TRACKC-LATE-COMMANDS-DONE > /dev/ttyS0'
   shutdown: poweroff

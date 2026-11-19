@@ -33,7 +33,7 @@ University OS Lab group assignment: **"Application-Specific Linux Distribution f
   - 8 GB: first used as the Ubuntu Server installer stick (Phase 0), later as the release-candidate drive for the graded image (ESP + squashfs root + small persist).
   - 64 GB planned GPT layout:
     1. ESP (~1 GB, shared boot menu for baseline and custom image)
-    2. Stock Ubuntu Server 24.04 baseline root (~25 GB)
+    2. Stock Ubuntu Server 24.04 baseline root (35 GiB; 25 GiB was too small for apt download + CUDA install)
     3. Custom image: squashfs root, **budget ≤ 8 GB** so the graded image would still fit an 8 GB stick
     4. Persist partition for the custom image (rest)
     Baseline and custom image share one medium, so boot-time comparisons are fair.

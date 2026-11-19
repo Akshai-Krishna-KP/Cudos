@@ -21,7 +21,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 source "$REPO/build/versions.env"
 CACHE="$REPO/cache"; WORK="$CACHE/baseline-install"; HTTP_PORT=8642
-IMG="$CACHE/baseline.img"; IMG_GIB=27   # 1 GiB ESP + 25 GiB root + slack
+IMG="$CACHE/baseline.img"; IMG_GIB=37   # 1 GiB ESP + 35 GiB root + slack
 CRED="$CACHE/baseline-credentials.txt"; LOG="$CACHE/qemu-install.log"
 SERIAL_EXPECTED="03018820042024224003"   # 64 GB SanDisk Cruzer Blade
 
@@ -55,10 +55,8 @@ sed -e "s|__PASSWORD_HASH__|$HASH|" -e "s|__HTTP__|$HTTP|g" \
   "$REPO/baseline/autoinstall/user-data.in" > "$WORK/http/user-data"
 cp "$REPO/baseline/autoinstall/meta-data" "$WORK/http/meta-data"
 : > "$WORK/http/vendor-data"   # cloud-init polls for it; empty = none
-# Prefetched .debs (baseline/prefetch-debs.sh), served to the VM over the local link.
-ln -s "$CACHE/debs" "$WORK/http/debs"
-( cd "$CACHE/debs" && ls -1 -- *.deb 2>/dev/null ) > "$WORK/http/debs.txt" || true
-echo "Seeding $(wc -l < "$WORK/http/debs.txt") prefetched .debs"
+# Prefetched .debs (baseline/prefetch-debs.sh) are shared into the VM read-only (virtio-9p).
+echo "Sharing $(ls "$CACHE/debs"/*.deb 2>/dev/null | wc -l) prefetched .debs via virtio-9p"
 
 cp "$REPO/build/versions.env" "$REPO/baseline/install-nvidia-stack.sh" \
    "$REPO/baseline/phase0-gate.sh" "$REPO/baseline/trackc-phase0-gate.service" \
@@ -103,6 +101,7 @@ qemu-system-x86_64 \
   -cdrom "$ISO" \
   -kernel "$WORK/casper/vmlinuz" -initrd "$WORK/casper/initrd" \
   -append "autoinstall ds=nocloud-net;s=$HTTP/ console=ttyS0,115200 ---" \
+  -virtfs local,path="$CACHE/debs",mount_tag=debs,security_model=none,readonly=on \
   -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
   -display none -serial file:"$LOG" -no-reboot
 
