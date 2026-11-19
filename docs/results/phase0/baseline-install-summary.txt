@@ -1,9 +1,12 @@
 # baseline install 2026-11-20T01:57:05+05:30
 iso=iso=ubuntu-24.04.5-live-server-amd64.iso
-installed_packages=984
+installed_packages=987   # ii + hi (held)
+cuda-toolkit-13-5=13.5.0-1
 cudnn9-cuda-13=9.28.1.4-1
 linux-image-generic=6.8.0-151.151
+nvidia-container-toolkit=1.20.2-1
 nvidia-driver-open=620.70.06-1ubuntu1
+nvidia-open=620.70.06-1ubuntu1
 openssh-server=1:9.6p1-3ubuntu13.20
 podman=4.9.3+ds1-1ubuntu0.2
-baseline-root: 129675/2293760 files (0.2% non-contiguous), 5117385/9175040 blocks
+root_fs: 5117385 of 9175040 4KiB blocks used (19.5 GiB of 35 GiB)
