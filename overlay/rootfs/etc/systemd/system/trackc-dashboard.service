@@ -1,0 +1,17 @@
+[Unit]
+Description=Track C live GPU dashboard on tty1
+After=gpu-autoconfig.service
+Conflicts=getty@tty1.service
+
+[Service]
+User=bench
+Group=bench
+SupplementaryGroups=tty
+ExecStart=/usr/local/sbin/trackc-dashboard
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYVTDisallocate=yes
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

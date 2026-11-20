@@ -1,0 +1,11 @@
+[Unit]
+Description=Start lab hotspot Wi-Fi on every wlan interface (DEV image only)
+After=systemd-udevd.service systemd-networkd.service
+ConditionPathExists=/etc/wpa_supplicant/trackc-wifi.conf
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/trackc-wifi-start
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+#!/bin/sh
+# gpu-autoconfig: first thing at boot. Detect NVIDIA GPUs via sysfs PCI IDs,
+# load the open kernel modules shipped in the image, create device nodes, put
+# the GPU in persistence mode and generate the CDI spec Podman uses.
+set -u
+found=
+for d in /sys/bus/pci/devices/*; do
+  [ "$(cat "$d/vendor")" = 0x10de ] || continue
+  case "$(cat "$d/class")" in 0x03*) found="$found ${d##*/}[$(cat "$d/device")]" ;; esac
+done
+if [ -z "$found" ]; then echo "gpu-autoconfig: no NVIDIA GPU found"; exit 0; fi
+echo "gpu-autoconfig: NVIDIA GPU(s):$found, driver $(modinfo -F version nvidia 2>/dev/null)"
+modprobe nvidia && modprobe nvidia_uvm || { echo "gpu-autoconfig: module load failed"; exit 1; }
+nvidia-ctk system create-device-nodes --control-devices --load-kernel-modules
+nvidia-smi -pm 1 >/dev/null 2>&1 || true
+mkdir -p /run/cdi
+nvidia-ctk cdi generate --output=/run/cdi/nvidia.yaml 2>/dev/null
+chmod 0644 /run/cdi/nvidia.yaml
+nvidia-smi -L

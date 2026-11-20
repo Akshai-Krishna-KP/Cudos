@@ -1,0 +1,5 @@
+# DEV image only: SSH for the lab, DHCP replies, ping.
+tcp dport 22 accept
+udp dport 68 accept
+icmp type echo-request accept
+meta l4proto ipv6-icmp accept

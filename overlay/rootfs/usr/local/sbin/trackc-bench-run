@@ -1,0 +1,23 @@
+#!/bin/sh
+# trackc-bench-run: runs the CUDA benchmark container (rootless Podman, GPU via CDI)
+# as the unprivileged 'bench' user. Without arguments: service loop, one run every
+# TRACKC_BENCH_INTERVAL seconds, results appended to ~/bench-results.jsonl.
+# 'once [args]': a single run (used by measure/collect.sh).
+set -eu
+IMG=localhost/trackc-bench:0.1
+: "${XDG_RUNTIME_DIR:=/run/trackc-bench}"; export XDG_RUNTIME_DIR
+[ -d "$XDG_RUNTIME_DIR" ] || XDG_RUNTIME_DIR=$(mktemp -d)
+podman image exists "$IMG" || podman load -q -i /usr/share/trackc/trackc-bench.tar >/dev/null
+run() {
+  podman run --rm --cgroups=disabled --network=none --read-only --cap-drop=all \
+    --security-opt=no-new-privileges \
+    --device nvidia.com/gpu=all "$IMG" "$@"
+}
+if [ "${1:-}" = once ]; then shift; run "$@"; exit; fi
+touch "$XDG_RUNTIME_DIR/started"          # time-to-benchmark marker
+i=0
+while :; do
+  i=$((i + 1))
+  run --label "boot-run$i" | tee -a "$HOME/bench-results.jsonl"
+  sleep "${TRACKC_BENCH_INTERVAL:-60}"
+done

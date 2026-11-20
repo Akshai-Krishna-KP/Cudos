@@ -1,0 +1,8 @@
+[Match]
+Type=wlan
+
+[Network]
+DHCP=ipv4
+
+[Link]
+RequiredForOnline=no

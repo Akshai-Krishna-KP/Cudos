@@ -4,16 +4,17 @@
 #   p1 ESP (FAT32)   EFI/BOOT/BOOTX64.EFI = Unified Kernel Image (kernel+initrd+cmdline)
 #   p2 trackc-root   squashfs (zstd), read-only root
 #   p3 trackc-persist ext4 labelled TRACKC_PERSIST (writable state)
-# Usage: build/builder.sh build/image/build-image.sh
-# Output: out/trackc.efi, out/rootfs.squashfs, out/disk.img
+# Usage: build/builder.sh build/image/build-image.sh [release|dev]
+# Output: out/<variant>/trackc.efi, rootfs.squashfs, disk.img (QEMU), sizes.txt
 set -euo pipefail
-SRC=/src; O=$SRC/out; R=$O/rootfs
+SRC=/src; VARIANT=${1:-release}; R=$SRC/out/rootfs-$VARIANT; O=$SRC/out/$VARIANT
+mkdir -p "$O"
 source "$SRC/build/versions.env"
 : "${SOURCE_DATE_EPOCH:?}"
 ESP_MIB=256; PERSIST_MIB=512
 
 KVER=$(ls "$R/lib/modules" | sort -V | tail -1)
-CMDLINE="root=PARTLABEL=trackc-root rootfstype=squashfs ro console=tty0 console=ttyS0,115200 panic=10"
+CMDLINE="root=PARTLABEL=trackc-root rootfstype=squashfs ro console=ttyS0,115200 console=tty0 quiet loglevel=3 modprobe.blacklist=nouveau panic=10"
 echo "kernel $KVER"
 
 # 1. UKI: one signed-able EFI binary, no bootloader needed (OVMF/laptop firmware boots it directly).
@@ -55,3 +56,9 @@ put "$O/rootfs.squashfs" $((1 + ESP_MIB))
 put "$O/persist.img" $((1 + ESP_MIB + sq_mib))
 sgdisk -p "$O/disk.img" | tail -4
 ls -lh "$O/trackc.efi" "$O/rootfs.squashfs" "$O/disk.img"
+{ echo "variant=$VARIANT kernel=$KVER"
+  echo "rootfs_uncompressed_bytes=$(du -sxb --exclude="$R/boot" "$R" | cut -f1)"
+  echo "squashfs_bytes=$(stat -c %s "$O/rootfs.squashfs")"
+  echo "uki_bytes=$(stat -c %s "$O/trackc.efi")"
+  echo "bench_image_tar_bytes=$(stat -c %s "$R/usr/share/trackc/trackc-bench.tar")"
+} | tee "$O/sizes.txt"

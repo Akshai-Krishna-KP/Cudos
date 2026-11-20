@@ -1,0 +1,18 @@
+[Unit]
+Description=Track C CUDA benchmark (rootless Podman container, non-root user)
+Requires=gpu-autoconfig.service
+After=gpu-autoconfig.service
+
+[Service]
+User=bench
+Group=bench
+RuntimeDirectory=trackc-bench
+Environment=XDG_RUNTIME_DIR=/run/trackc-bench
+ExecStart=/usr/local/sbin/trackc-bench-run
+Restart=on-failure
+RestartSec=10
+ProtectSystem=full
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

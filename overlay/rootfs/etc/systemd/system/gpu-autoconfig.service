@@ -1,0 +1,12 @@
+[Unit]
+Description=Detect NVIDIA GPU, load driver, generate CDI spec
+After=systemd-udev-settle.service systemd-modules-load.service
+ConditionVirtualization=!vm
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/gpu-autoconfig
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+#!/bin/sh
+for _ in $(seq 30); do
+  found=
+  for i in /sys/class/net/*; do
+    grep -q '^DEVTYPE=wlan$' "$i/uevent" 2>/dev/null || continue
+    found=1; systemctl start --no-block "trackc-wifi@${i##*/}.service"
+  done
+  [ -n "$found" ] && exit 0; sleep 1
+done
+echo "no Wi-Fi interface found"

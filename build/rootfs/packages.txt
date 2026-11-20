@@ -1,10 +1,17 @@
 # Packages added on top of mmdebstrap --variant=minbase (Essential + apt).
 # One per line; comments explain why each is needed (feeds the report).
-systemd           # init (trimmed later in Phase 6)
+# NVIDIA driver userspace + container toolkit come from NVIDIA's repo, see
+# build/nvidia/install-nvidia.sh (installed by a customize hook, versions pinned).
+systemd           # init
 systemd-sysv      # /sbin/init -> systemd
 udev              # device nodes, /dev/disk/by-label for the persist partition
-linux-image-amd64 # Phase 2 only: Debian kernel; replaced by our LTS kernel in Phase 3
+linux-image-amd64 # Debian 13 kernel 6.12 LTS (custom kernel = Phase 3, deferred)
 initramfs-tools   # builds the initrd that mounts squashfs + overlays
 busybox           # initramfs shell/mount (overlay options), ~1 MB
 zstd              # initrd compression
-kmod              # modprobe
+kmod              # modprobe (nvidia modules)
+podman            # container engine (rootless), runs the CUDA benchmark via CDI
+crun              # OCI runtime used by podman (smaller/faster than runc)
+uidmap            # newuidmap/newgidmap for rootless podman
+nftables          # default-deny firewall (hardening)
+procps            # free/ps/sysctl for the demo and measurements
