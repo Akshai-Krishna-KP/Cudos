@@ -32,6 +32,6 @@ case "$here/" in
 esac
 [ $# -gt 0 ] || set -- bash
 tty=; [ -t 0 ] && [ -t 1 ] && tty=-it
-exec podman run --rm $tty --cgroups=disabled --network=none --cap-drop=all \
+exec podman --log-level=error run --rm $tty --cgroups=disabled --network=none --cap-drop=all \
   --security-opt=no-new-privileges --userns=keep-id --device nvidia.com/gpu=all \
   -v "$W:/work" -w "/work$rel" -e HOME=/work "$IMG" "$@"

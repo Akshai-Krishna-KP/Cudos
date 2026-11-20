@@ -1,6 +1,6 @@
 #!/bin/sh
 # gpu-status: one-shot report: GPU, driver, CUDA, Dynamic Boost, boot benchmark result.
-L=/var/lib/trackc-bench/latest.json
+L=/run/trackc-bench/latest.json
 v() { sed -n "s/.*\"$1\":\([^,}]*\).*/\1/p" "$L" 2>/dev/null | tr -d '"'; }
 if ! command -v nvidia-smi >/dev/null || ! nvidia-smi -L >/dev/null 2>&1; then echo "GPU: not available (gpu-autoconfig: journalctl -u gpu-autoconfig)"; exit 1; fi
 nvidia-smi --query-gpu=name,driver_version,memory.total,temperature.gpu,power.draw,pstate,persistence_mode \

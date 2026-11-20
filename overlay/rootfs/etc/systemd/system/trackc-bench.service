@@ -10,6 +10,7 @@ User=bench
 Group=bench
 RuntimeDirectory=trackc-bench
 RuntimeDirectoryPreserve=yes
+RuntimeDirectoryMode=0755
 Environment=XDG_RUNTIME_DIR=/run/trackc-bench
 ExecStart=/usr/local/sbin/trackc-bench-run
 TimeoutStartSec=300
