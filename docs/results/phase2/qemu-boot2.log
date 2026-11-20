@@ -20,11 +20,11 @@ TRACKC-SELFTEST mounts:
 TRACKC-SELFTEST RESULT PASS
 [!p]104[?7h[6n[32766;32766H[6n[!p]104[?7h[6n[32766;32766H[6n
 
-  Track C GPU appliance  (trackc-dev, Debian 13, read-only root)
+  Track C GPU appliance  (trackc, Debian 13, read-only root)
 
   GPU: not available (gpu-autoconfig: journalctl -u gpu-autoconfig)
 
   Network: 127.0.1.1
   Log in, then:  cuda-dev (compile + run CUDA)  gpu-status  gpu-watch  gpu-bench
 
-trackc-dev login: 
+trackc login: 
