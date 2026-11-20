@@ -32,7 +32,7 @@ find_host() {  # wait (max ~6 min) for the target to answer SSH; re-find by MAC 
   for _ in $(seq 70); do
     t true 2>/dev/null && return 0
     for i in $(seq 1 254); do (ping -c1 -W1 "$net.$i" >/dev/null 2>&1 &); done; sleep 2
-    i=$(ip neigh | awk -v m="$MAC" 'tolower($5)==m && $1 ~ /^[0-9.]+$/ {print $1; exit}')
+    i=$(ip neigh | awk -v m="$MAC" 'tolower($5)==m && $1 ~ /^[0-9.]+$/ {print $1; exit}' || true)
     [[ -n $i && $i != "$HOST" ]] && { HOST=$i; log "target moved to $HOST"; }
     sleep 3
   done
