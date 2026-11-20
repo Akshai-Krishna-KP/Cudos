@@ -1,0 +1,12 @@
+<section id="kernel" class="dark with-footer">
+<p class="eyebrow">OUR KERNEL</p>
+<h2>kernel.org 6.12.118 LTS, trimmed to what the two laptops use</h2>
+<div class="row">
+<div class="card rise" style="--i:0"><p class="k">MODULES</p><p class="big">369</p><p class="note">Debian’s kernel: about 4,000. Taken from what was loaded on Laptop 1 and Laptop 2 (localmodconfig).</p></div>
+<div class="card rise" style="--i:1"><p class="k">BOOT FILE (UKI)</p><p class="big">22 MB</p><p class="note">Was 46 MB with the Debian kernel and its initramfs.</p></div>
+<div class="card rise" style="--i:2"><p class="k">BUILD</p><p class="big">5 min</p><p class="note">20 threads, in a pinned container. Config = Debian base + module lists + a small fragment in Git.</p></div>
+</div>
+<p>NVIDIA’s open modules are compiled against it at image build time. GPU speed unchanged: 227.5 GB/s at boot.</p>
+<p class="footer">build/kernel/ · trackc.config · lsmod-*.txt</p>
+<aside>No module signing, by decision: Secure Boot stays off. The fragment also keeps the virtio drivers so the image can be smoke-tested in QEMU.</aside>
+</section>

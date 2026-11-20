@@ -1,15 +1,15 @@
 <section id="limits">
 <p class="eyebrow">HONEST LIMITS · NEXT STEPS</p>
-<h2>What is not done yet</h2>
+<h2>What is not done</h2>
 <div class="row">
 <div class="col">
-<div class="card"><p class="k">CUSTOM KERNEL</p><p class="note">Still the Debian kernel. A localmodconfig kernel would remove most of the ~400 MB of unused modules.</p></div>
-<div class="card"><p class="k">SECURE BOOT</p><p class="note">Modules and UKI unsigned. Next: sign with our own key (MOK), lockdown=integrity, dm-verity.</p></div>
+<div class="card"><p class="k">SECURE BOOT</p><p class="note">Off by decision: no module or UKI signing. Next: our own key (MOK), lockdown, dm-verity.</p></div>
+<div class="card"><p class="k">CONTAINER ROOTFS</p><p class="note">Not --read-only: the NVIDIA CDI hook writes ld.so.cache inside it.</p></div>
 </div>
 <div class="col">
-<div class="card"><p class="k">CONTAINER ROOTFS</p><p class="note">Not --read-only: the NVIDIA CDI hook writes ld.so.cache inside it.</p></div>
-<div class="card"><p class="k">COVERAGE</p><p class="note">Tested on Laptop 2 (RTX 4060) only. Driver chosen at build time; first-boot driver updates designed, not built.</p></div>
+<div class="card"><p class="k">COVERAGE</p><p class="note">Measured on Laptop 2 (RTX 4060). Laptop 1 checked by hand only (docs/laptop1-test.md).</p></div>
+<div class="card"><p class="k">DRIVER UPDATES</p><p class="note">Driver chosen and pinned at build time; a first-boot update path is designed, not built.</p></div>
 </div>
 </div>
-<aside>Everything listed here is documented in docs/report.md section 9.</aside>
+<aside>Details in docs/report.md section 9.</aside>
 </section>

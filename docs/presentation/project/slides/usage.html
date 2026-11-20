@@ -1,0 +1,22 @@
+<section id="usage" class="with-footer">
+<p class="eyebrow">USE IT · YOUR OWN CUDA CODE</p>
+<h2>Log in, write CUDA, run it on the GPU</h2>
+<div class="row" style="gap:40px">
+<div class="col" style="flex:0.9">
+<div class="card" style="background:#121820"><p class="mono" style="font-size:26px;color:#C3CED8;line-height:1.6">$ cd ~/cuda/examples<br>$ cuda-dev make<br>$ cuda-dev ./matmul 2048<br>$ cuda-dev ./pi 1000000000<br>$ cuda-dev    <span style="color:#2FBF8A"># shell with nvcc</span></p></div>
+<p class="small">nvcc, cuBLAS, cuRAND, cuFFT run in a rootless container on the persistent partition. The host stays read-only, with no compiler.</p>
+</div>
+<div class="col" style="flex:1.1">
+<table>
+<tr><th style="width:46%">Measured on Laptop 2</th><th style="width:27%">Time</th><th>vs 1 CPU core</th></tr>
+<tr><td>Matmul 2048², CPU</td><td>2,426 ms</td><td>1×</td></tr>
+<tr><td>Matmul, our CUDA kernel</td><td>19.2 ms</td><td>126×</td></tr>
+<tr><td>Matmul, cuBLAS</td><td>2.5 ms</td><td>971×</td></tr>
+<tr><td>π, 10⁹ points, GPU</td><td>10.5 ms</td><td>1,275×</td></tr>
+</table>
+<p class="small">All results checked against the CPU answer.</p>
+</div>
+</div>
+<p class="footer">docs/results/cuda-dev/examples-laptop2.txt · benchmark/examples/</p>
+<aside>This is the real-world part: an SSH or console user compiles and runs their own code. Files in ~/cuda survive reboots. The CPU pi time is measured on 50 million points and scaled.</aside>
+</section>
