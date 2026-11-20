@@ -1,0 +1,40 @@
+#!/bin/sh
+# trackc-live: boot from the live ISO (kernel cmdline has trackc.live). The root squashfs
+# is a FILE on the ISO (CD/DVD, VM disk, or the ISO written to a USB stick): find the
+# medium, mount it, attach live/rootfs.squashfs to /dev/loop0 (root=/dev/loop0).
+# Every attempt is logged to /run/trackc/live-search.log and shown on failure.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+grep -qw trackc.live /proc/cmdline || exit 0
+. /scripts/functions
+mkdir -p /run/trackc/iso; LOG=/run/trackc/live-search.log; : > "$LOG"
+for m in isofs loop sr_mod cdrom ahci ata_piix usb_storage uas xhci_pci ehci_pci ohci_pci uhci_hcd virtio_scsi virtio_blk; do
+  modprobe -q "$m" 2>>"$LOG"
+done
+found=; round=0
+while [ $round -lt 60 ] && [ -z "$found" ]; do          # up to ~60 s: slow USB sticks
+  round=$((round + 1))
+  udevadm settle --timeout=3 2>/dev/null || sleep 1
+  # Whole disks AND partitions: written to USB, a hybrid ISO is readable at both levels.
+  for d in /dev/sr[0-9]* /dev/sd[a-z] /dev/sd[a-z][0-9]* /dev/vd[a-z] /dev/vd[a-z][0-9]*; do
+    [ -b "$d" ] || continue
+    if mount -t iso9660 -o ro "$d" /run/trackc/iso 2>>"$LOG"; then
+      if [ -f /run/trackc/iso/live/trackc-live.id ]; then found=$d; break; fi
+      echo "round $round: $d is iso9660 but has no live/trackc-live.id" >>"$LOG"
+      umount /run/trackc/iso
+    else
+      echo "round $round: $d: not iso9660" >>"$LOG"
+    fi
+  done
+  [ $((round % 10)) -eq 0 ] && [ -z "$found" ] && echo "trackc-live: still searching for the live medium ($round s)..."
+done
+if [ -z "$found" ]; then
+  echo "trackc-live: live medium NOT found. Devices tried:"; tail -n 25 "$LOG"
+  echo "Block devices present:"; ls /dev/sr* /dev/sd* /dev/vd* /dev/nvme* 2>/dev/null
+  sleep 120
+  panic "trackc-live: live medium (live/trackc-live.id) not found"
+fi
+log_success_msg "trackc-live: live medium on $found"
+losetup -r /dev/loop0 /run/trackc/iso/live/rootfs.squashfs || panic "trackc-live: cannot attach rootfs.squashfs"
+exit 0

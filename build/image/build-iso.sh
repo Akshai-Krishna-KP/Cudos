@@ -6,11 +6,12 @@
 #   mounts the ISO (label TRACKC_LIVE) and loop-mounts live/rootfs.squashfs.
 #   State is in RAM (volatile) unless a TRACKC_PERSIST partition exists. The cuda-dev
 #   toolkit archive is on the ISO (images/), so cuda-dev works on the live system.
-# Usage: build/builder.sh build/rootfs/build-rootfs.sh portable trackc
+# Usage: build/kernel/run.sh iso && build/builder.sh build/rootfs/build-rootfs.sh portable trackc-iso
 #        build/builder.sh build/image/build-iso.sh
 # Output: out/iso/trackc-gpu-appliance.iso + SHA256SUMS
 set -euo pipefail
 SRC=/src; R=$SRC/out/rootfs-portable; O=$SRC/out/iso; T=$O/tree
+[[ -f $R/etc/initramfs-tools/scripts/local-top/trackc-live ]] || { echo "build the rootfs with the ISO kernel: build-rootfs.sh portable trackc-iso" >&2; exit 1; }
 source "$SRC/build/versions.env"; : "${SOURCE_DATE_EPOCH:?}"
 rm -rf "$O"; mkdir -p "$T/live" "$T/images" "$T/EFI/BOOT"
 KVER=$(ls "$R/lib/modules" | sort -V | tail -1)

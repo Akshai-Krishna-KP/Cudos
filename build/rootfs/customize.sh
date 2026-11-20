@@ -9,9 +9,10 @@ set -euo pipefail
 R=$1; VARIANT=$2; KERNEL=${3:-debian}; SRC=/src
 source "$SRC/build/versions.env"
 ch() { chroot "$R" "$@"; }
-if [[ $KERNEL == trackc ]]; then
+if [[ $KERNEL == trackc* ]]; then
   # Our Phase 3 kernel: image + headers (headers only for the DKMS build, purged below).
-  cp "$SRC"/out/kernel/linux-image-*-trackc_*.deb "$SRC"/out/kernel/linux-headers-*-trackc_*.deb "$R/tmp/"
+  KDIR=$SRC/out/kernel; [[ $KERNEL == trackc-iso ]] && KDIR=$SRC/out/kernel-iso
+  cp "$KDIR"/linux-image-*-trackc_*.deb "$KDIR"/linux-headers-*-trackc_*.deb "$R/tmp/"
   DEBIAN_FRONTEND=noninteractive ch sh -c 'dpkg -i /tmp/linux-headers-*.deb /tmp/linux-image-*.deb' >/dev/null
   rm -f "$R"/tmp/linux-*.deb
 fi
@@ -115,6 +116,12 @@ if [[ $VARIANT == portable ]]; then
   ch systemctl disable ssh.service ssh.socket >/dev/null 2>&1 || true
   ch systemctl enable systemd-networkd.service trackc-grow-persist.service trackc-provision.service >/dev/null
   ch passwd -l root >/dev/null
+fi
+
+# --- 3c. live ISO kernel: initramfs finds the ISO and loop-mounts live/rootfs.squashfs
+if [[ $KERNEL == trackc-iso ]]; then
+  cp -a "$SRC/overlay/iso/etc/initramfs-tools/scripts" "$R/etc/initramfs-tools/"
+  grep -v '^#' "$SRC/overlay/iso/etc/initramfs-tools/modules-iso" >> "$R/etc/initramfs-tools/modules"
 fi
 
 # --- 4. initramfs + cleanup

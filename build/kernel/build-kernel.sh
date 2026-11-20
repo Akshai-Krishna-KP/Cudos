@@ -7,7 +7,9 @@
 # Output: out/kernel/linux-image-*-trackc_*.deb, linux-headers-*.deb, config-<ver>-trackc
 set -euo pipefail
 SRC=/src; source "$SRC/build/versions.env"
+FLAVOR=${1:-laptop}   # laptop = the kernel on the sticks; iso = + trackc-iso.config
 V=$KERNEL_VERSION; O=$SRC/out/kernel; W=/build
+[[ $FLAVOR == iso ]] && O=$SRC/out/kernel-iso
 rm -rf "$O"; mkdir -p "$O" "$W"
 tar -xf "$SRC/cache/kernel/linux-$V.tar.xz" -C "$W"
 cd "$W/linux-$V"
@@ -16,7 +18,8 @@ dpkg-deb --fsys-tarfile "$deb" | tar -xO --wildcards './boot/config-*' > .config
 cat "$SRC"/build/kernel/lsmod-*.txt | sort -u | awk '{print $1, 0, 0}' > /tmp/lsmod
 make -s olddefconfig
 (yes '' || true) | make -s LSMOD=/tmp/lsmod localmodconfig >/dev/null 2>&1
-scripts/kconfig/merge_config.sh -m -O . .config "$SRC/build/kernel/trackc.config" >/dev/null
+FRAGS=("$SRC/build/kernel/trackc.config"); [[ $FLAVOR == iso ]] && FRAGS+=("$SRC/build/kernel/trackc-iso.config")
+scripts/kconfig/merge_config.sh -m -O . .config "${FRAGS[@]}" >/dev/null
 make -s olddefconfig
 echo "modules enabled: $(grep -c '=m$' .config)   built-in: $(grep -c '=y$' .config)"
 export KBUILD_BUILD_TIMESTAMP="@$SOURCE_DATE_EPOCH" KBUILD_BUILD_USER=trackc KBUILD_BUILD_HOST=trackc-builder

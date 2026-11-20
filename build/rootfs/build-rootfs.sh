@@ -18,7 +18,8 @@
 set -euo pipefail
 SRC=/src
 VARIANT=${1:-release}
-KERNEL=${2:-debian}   # debian = Debian linux-image-amd64; trackc = our kernel (build/kernel, out/kernel/*.deb)
+KERNEL=${2:-debian}   # debian = Debian linux-image-amd64; trackc = our kernel (out/kernel); trackc-iso = live-ISO kernel (out/kernel-iso)
+KDIR=$SRC/out/kernel; [[ $KERNEL == trackc-iso ]] && KDIR=$SRC/out/kernel-iso
 source "$SRC/build/versions.env"
 OUT="$SRC/out/rootfs-$VARIANT"
 KEYRING=/usr/share/keyrings/cuda-archive-keyring.gpg
@@ -33,8 +34,8 @@ PKGS=$(pkgs "$SRC/build/rootfs/packages.txt")
 [[ $VARIANT == dev || $VARIANT == portable ]] && PKGS="$PKGS,$(pkgs "$SRC/build/rootfs/packages-dev.txt")"
 # portable: shareable image (no lab secrets); grows its persist partition on first boot.
 [[ $VARIANT == portable ]] && PKGS="$PKGS,gdisk,e2fsprogs"
-if [[ $KERNEL == trackc ]]; then
-  ls "$SRC"/out/kernel/linux-image-*-trackc_*.deb >/dev/null || { echo "build the kernel first (build/kernel/run.sh)" >&2; exit 1; }
+if [[ $KERNEL == trackc* ]]; then
+  ls "$KDIR"/linux-image-*-trackc_*.deb >/dev/null || { echo "build the kernel first (build/kernel/run.sh)" >&2; exit 1; }
   PKGS=$(echo "$PKGS" | tr , '\n' | grep -vx linux-image-amd64 | paste -sd,)
 fi
 V=$NVIDIA_DEB_VERSION; C=$NVIDIA_CTK_DEB_VERSION
@@ -46,7 +47,7 @@ NV_KEEP="$NV_KEEP,nvidia-container-toolkit=$C,nvidia-container-toolkit-base=$C,l
 NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,dkms"
 [[ $KERNEL == debian ]] && NV_BUILD="$NV_BUILD,linux-headers-amd64"
 # trackc kernel headers run objtool, which links libelf (build-only; autoremoved after).
-[[ $KERNEL == trackc ]] && NV_BUILD="$NV_BUILD,libelf1t64"
+[[ $KERNEL == trackc* ]] && NV_BUILD="$NV_BUILD,libelf1t64"
 
 mmdebstrap \
   --variant=minbase \
