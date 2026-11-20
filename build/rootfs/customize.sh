@@ -67,6 +67,13 @@ if [[ $VARIANT == dev ]]; then
   install -d -m 700 "$R/home/trackc/.ssh"
   install -m 600 "$SRC/out/dev-secrets/authorized_keys" "$R/home/trackc/.ssh/authorized_keys"
   ch chown -R trackc:trackc /home/trackc
+  # cuda-dev: own subordinate ID range (useradd may have reused bench's), workspace link
+  # (~/cuda -> /var/lib/cuda-work/trackc, created at boot by tmpfiles), example sources.
+  sed -i '/^trackc:/d' "$R/etc/subuid" "$R/etc/subgid"
+  echo "trackc:200000:65536" >> "$R/etc/subuid"; echo "trackc:200000:65536" >> "$R/etc/subgid"
+  ln -sfn /var/lib/cuda-work/trackc "$R/home/trackc/cuda"; ch chown -h trackc:trackc /home/trackc/cuda
+  install -d "$R/usr/share/trackc/examples"
+  install -m 644 "$SRC/benchmark/samples/vector_add.cu" "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
   # Console fallback login (same generated password as the baseline, from cache/).
   if [[ -f $SRC/cache/baseline-credentials.txt ]]; then
     pw=$(sed -n 's/^password=//p' "$SRC/cache/baseline-credentials.txt")

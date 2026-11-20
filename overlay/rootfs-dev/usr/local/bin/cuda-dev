@@ -1,0 +1,36 @@
+#!/bin/sh
+# cuda-dev: compile and run your own CUDA code on the appliance.
+# The host has no CUDA toolkit; this runs the CUDA 13.5 development container
+# (nvcc, gcc, cuBLAS, cuRAND, cuFFT, NVRTC) rootless, as you, with the GPU via CDI,
+# no network and no capabilities. Your workspace ~/cuda (= /var/lib/cuda-work/$USER,
+# on the persistent partition) is mounted at /work and keeps its files across reboots.
+#
+#   cuda-dev                         interactive shell with nvcc in ~/cuda
+#   cuda-dev nvcc -arch=sm_89 -o hello hello.cu
+#   cuda-dev ./hello
+#   cuda-dev --help
+set -eu
+IMG=localhost/trackc-cuda-dev:13.5
+TAR=/run/trackc/persist/images/trackc-cuda-dev.tar
+U=$(id -un); W=/var/lib/cuda-work/$U
+if [ "${1:-}" = -h ] || [ "${1:-}" = --help ]; then sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
+[ "$(id -u)" != 0 ] || { echo "cuda-dev: run it as a normal user (rootless), not as root" >&2; exit 1; }
+[ -d "$W" ] && [ -w "$W" ] || { echo "cuda-dev: workspace $W missing" >&2; exit 1; }
+[ -d "$W/examples" ] || cp -r /usr/share/trackc/examples "$W/examples"
+if ! podman image exists "$IMG" 2>/dev/null; then
+  [ -r "$TAR" ] || { echo "cuda-dev: CUDA toolkit image not installed ($TAR)." >&2
+                     echo "          From the build host run: build/container/install-cudadev.sh <ip>" >&2; exit 1; }
+  echo "cuda-dev: first use, loading the CUDA toolkit image (1-2 minutes)..." >&2
+  podman load -q -i "$TAR" >/dev/null
+fi
+# Same sub-directory inside the container when called from within ~/cuda.
+rel=
+case "$PWD/" in
+  "$W"/*) rel=${PWD#"$W"} ;;
+  *) [ $# -eq 0 ] || echo "cuda-dev: note: only ~/cuda is visible inside; running in ~/cuda" >&2 ;;
+esac
+[ $# -gt 0 ] || set -- bash
+tty=; [ -t 0 ] && [ -t 1 ] && tty=-it
+exec podman run --rm $tty --cgroups=disabled --network=none --cap-drop=all \
+  --security-opt=no-new-privileges --userns=keep-id --device nvidia.com/gpu=all \
+  -v "$W:/work" -w "/work$rel" -e HOME=/work "$IMG" "$@"

@@ -1,0 +1,36 @@
+# Containerfile.cudadev: CUDA 13.5 development container for the appliance's `cuda-dev`
+# command (users SSH in and compile + run their own CUDA code; no nvcc on the host).
+# Built offline from the prefetched debs (baseline/prefetch-debs.sh), mounted at /debs.
+# Contents: gcc/g++/make, nvcc, cudart, cuBLAS, cuRAND, cuFFT, NVRTC, nvJitLink, NVTX,
+# cuobjdump/nvdisasm. Not included (size): cuDNN, cuSOLVER, cuSPARSE, NPP.
+# Lives on the persist partition, NOT in the read-only image (optional add-on).
+ARG BASE
+FROM ${BASE}
+# dpkg --force-depends: install exactly these files offline (skips perl/dpkg-dev that
+# build-essential would pull); every tool below runs.
+RUN --network=none cd /debs && dpkg -i --force-depends \
+      ./libc6_*.deb ./libc-bin_*.deb ./make_*.deb \
+      ./g++_*.deb ./g++-13_*.deb ./g++-13-x86-64-linux-gnu_*.deb ./g++-x86-64-linux-gnu_*.deb \
+      ./gcc_*.deb ./gcc-13_*.deb ./gcc-13-base_*.deb ./gcc-13-x86-64-linux-gnu_*.deb ./gcc-x86-64-linux-gnu_*.deb \
+      ./cpp_*.deb ./cpp-13_*.deb ./cpp-13-x86-64-linux-gnu_*.deb ./cpp-x86-64-linux-gnu_*.deb \
+      ./libstdc++-13-dev_*.deb ./libgcc-13-dev_*.deb ./libc6-dev_*.deb ./libc-dev-bin_*.deb ./linux-libc-dev_*.deb \
+      ./libcrypt-dev_*.deb ./rpcsvc-proto_*.deb ./binutils_*.deb ./binutils-common_*.deb ./binutils-x86-64-linux-gnu_*.deb \
+      ./libbinutils_*.deb ./libctf0_*.deb ./libctf-nobfd0_*.deb ./libgprofng0_*.deb ./libsframe1_*.deb ./libjansson4_*.deb \
+      ./libasan8_*.deb ./libatomic1_*.deb ./libcc1-0_*.deb ./libgomp1_*.deb ./libhwasan0_*.deb ./libisl23_*.deb ./libitm1_*.deb \
+      ./liblsan0_*.deb ./libmpc3_*.deb ./libmpfr6_*.deb ./libquadmath0_*.deb ./libtsan2_*.deb ./libubsan1_*.deb \
+      ./cuda-nvcc-13-5_*.deb ./cuda-crt-13-5_*.deb ./cuda-cudart-13-5_*.deb ./cuda-cudart-dev-13-5_*.deb \
+      ./cuda-culibos-dev-13-5_*.deb ./cuda-driver-dev-13-5_*.deb ./cuda-toolkit-13-5-config-common_*.deb \
+      ./cuda-toolkit-config-common_*.deb ./cuda-toolkit-13-config-common_*.deb ./cccl-13-5_*.deb \
+      ./libnvvm-13-5_*.deb ./libnvptxcompiler-13-5_*.deb \
+      ./libcublas-13-5_*.deb ./libcublas-dev-13-5_*.deb ./libcurand-13-5_*.deb ./libcurand-dev-13-5_*.deb \
+      ./libcufft-13-5_*.deb ./libcufft-dev-13-5_*.deb ./cuda-nvrtc-13-5_*.deb ./cuda-nvrtc-dev-13-5_*.deb \
+      ./libnvjitlink-13-5_*.deb ./libnvjitlink-dev-13-5_*.deb ./cuda-nvtx-13-5_*.deb ./cuda-profiler-api-13-5_*.deb \
+      ./cuda-cuobjdump-13-5_*.deb ./cuda-nvdisasm-13-5_*.deb \
+ && ln -sfn /usr/local/cuda-13.5 /usr/local/cuda \
+ && rm -rf /var/cache/* /var/log/*
+ENV PATH=/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
+    CUDA_HOME=/usr/local/cuda
+# Both laptops are Ada: compile with -arch=sm_89 (not forced here, so users can choose).
+WORKDIR /work
+CMD ["/bin/bash"]
