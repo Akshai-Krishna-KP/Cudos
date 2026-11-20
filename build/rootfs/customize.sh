@@ -15,7 +15,11 @@ echo "customize: kernel $KVER, nvidia $NVV, variant $VARIANT"
 
 # --- 1. NVIDIA open kernel modules (built here, unsigned: Secure Boot off, documented)
 ch dkms status
-ch dkms build "nvidia/$NVV" -k "$KVER" || { cat "$R/var/lib/dkms/nvidia/$NVV/build/make.log" | tail -40; exit 1; }
+# Reproducible module: NVIDIA stamps user@host and `date` into nvidia.ko/nvidia-modeset.ko
+# (utils.mk: NV_BUILD_USER/NV_BUILD_HOST/DATE ?=). Pin them; --force rebuilds the copy
+# the package postinst may already have built without these settings.
+ch env NV_BUILD_USER=trackc NV_BUILD_HOST=trackc-builder DATE="date -u -d @$SOURCE_DATE_EPOCH" \
+  dkms build --force "nvidia/$NVV" -k "$KVER" || { cat "$R/var/lib/dkms/nvidia/$NVV/build/make.log" | tail -40; exit 1; }
 ch dkms install --force "nvidia/$NVV" -k "$KVER"
 mkdir -p "$R/root/keep/ko"
 find "$R/lib/modules/$KVER/updates" -name 'nvidia*.ko*' -exec cp {} "$R/root/keep/ko/" \;
