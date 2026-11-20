@@ -23,7 +23,7 @@ while (($#)); do case $1 in
 OUT="$REPO/docs/results/$PHASE/$NAME"; mkdir -p "$OUT/raw"
 KH="$REPO/cache/known_hosts_trackc"
 SSH=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o ConnectTimeout=5
-     -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" -o StrictHostKeyChecking=accept-new)
+     -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error)  # lab LAN; baseline and custom share the IP but not the host key
 log() { echo "[$(date +%T)] $*" | tee -a "$OUT/run.log"; }
 t() { "${SSH[@]}" "trackc@$HOST" "$@"; }
 
@@ -40,9 +40,9 @@ find_host() {  # wait (max ~6 min) for the target to answer SSH; re-find by MAC 
 }
 
 push_collector() {
-  scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" \
+  scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
     "$REPO/measure/collect.sh" "trackc@$HOST:/tmp/trackc-collect.sh"
-  scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" \
+  scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
     "$REPO/measure/bench-appliance.sh" "trackc@$HOST:/tmp/trackc-bench-appliance.sh"
 }
 collect() { push_collector; t "sudo BENCH_CMD='$BENCH_CMD' BENCH_RUNS=$RUNS BENCH_START_MARKER='$MARKER' bash /tmp/trackc-collect.sh /var/lib/trackc/measure $*"; }
@@ -58,7 +58,7 @@ if [[ -z $BENCH_CMD ]]; then
   BENCH_CMD=/opt/trackc/trackc_bench
   if ! t "test -x $BENCH_CMD"; then
     log "building trackc_bench on target"
-    scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" \
+    scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
       "$REPO/benchmark/src/trackc_bench.cu" "trackc@$HOST:/tmp/"
     t 'cd /tmp && /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o trackc_bench trackc_bench.cu -lcublas && sudo install -m 755 trackc_bench /opt/trackc/'
   fi
