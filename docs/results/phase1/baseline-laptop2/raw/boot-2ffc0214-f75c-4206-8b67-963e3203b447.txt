@@ -1,0 +1,58 @@
+# boot 2026-11-20T06:57:05+00:00 boot_id=2ffc0214-f75c-4206-8b67-963e3203b447
+$ systemd-analyze
+Startup finished in 15.516s (firmware) + 6.682s (loader) + 3.922s (kernel) + 19.537s (userspace) = 45.658s 
+graphical.target reached after 18.519s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @18.519s
+└─podman-restart.service @11.111s +7.387s
+  └─network-online.target @11.074s
+    └─network.target @11.073s
+      └─wpa_supplicant.service @10.809s +263ms
+        └─dbus.service @9.527s +1.270s
+          └─basic.target @9.525s
+            └─sockets.target @9.525s
+              └─snapd.socket @9.521s +3ms
+                └─sysinit.target @9.501s
+                  └─snapd.apparmor.service @9.349s +150ms
+                    └─apparmor.service @8.697s +632ms
+                      └─local-fs.target @8.694s
+                        └─boot-efi.mount @8.673s +20ms
+                          └─systemd-fsck@dev-disk-by\x2duuid-4078\x2d64B5.service @4.054s +131ms
+                            └─dev-disk-by\x2duuid-4078\x2d64B5.device @4.020s
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+8.854s podman-clean-transient.service
+8.517s nvidia-cdi-refresh.service
+8.316s snapd.seeded.service
+8.178s snapd.service
+7.408s podman-auto-update.service
+7.387s podman-restart.service
+6.042s apport.service
+3.375s ModemManager.service
+3.341s pollinate.service
+3.079s udisks2.service
+2.578s dev-sda2.device
+1.701s thermald.service
+1.671s ssh.service
+1.365s trackc-phase0-gate.service
+1.307s polkit.service
+1.284s avahi-daemon.service
+1.270s dbus.service
+1.195s systemd-journal-flush.service
+1.161s switcheroo-control.service
+1.045s rsyslog.service
+ 889ms systemd-udevd.service
+ 801ms lvm2-monitor.service
+ 771ms trackc-wifi-start.service
+ 690ms multipathd.service
+ 632ms apparmor.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    1.417775] Run /init as init process
+[    4.417795] systemd[1]: systemd 255.4-1ubuntu8.18 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+
+time_to_benchmark_s=n/a

@@ -1,0 +1,58 @@
+# boot 2026-11-20T06:56:02+00:00 boot_id=99257f72-af7c-4d80-9767-9111835d52f2
+$ systemd-analyze
+Startup finished in 15.511s (firmware) + 6.695s (loader) + 3.759s (kernel) + 20.681s (userspace) = 46.648s 
+graphical.target reached after 18.488s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @18.488s
+└─multi-user.target @18.473s
+  └─snapd.seeded.service @9.701s +8.654s
+    └─basic.target @9.549s
+      └─sockets.target @9.549s
+        └─snapd.socket @9.546s +3ms
+          └─sysinit.target @9.521s
+            └─snapd.apparmor.service @9.379s +141ms
+              └─apparmor.service @8.713s +647ms
+                └─local-fs.target @8.709s
+                  └─run-user-1000.mount @18.627s
+                    └─local-fs-pre.target @2.185s
+                      └─lvm2-monitor.service @1.359s +825ms
+                        └─systemd-journald.socket @1.320s
+                          └─-.mount @1.264s
+                            └─-.slice @1.264s
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+8.777s nvidia-cdi-refresh.service
+8.757s podman-clean-transient.service
+8.654s snapd.seeded.service
+8.434s snapd.service
+7.291s podman-auto-update.service
+7.257s podman-restart.service
+6.165s apport.service
+3.260s pollinate.service
+3.123s ModemManager.service
+3.037s udisks2.service
+2.539s dev-sda2.device
+2.206s trackc-phase0-gate.service
+1.928s thermald.service
+1.786s ssh.service
+1.572s polkit.service
+1.496s avahi-daemon.service
+1.479s dbus.service
+1.344s switcheroo-control.service
+1.234s rsyslog.service
+1.169s systemd-journal-flush.service
+ 825ms lvm2-monitor.service
+ 818ms trackc-wifi-start.service
+ 778ms systemd-udevd.service
+ 706ms multipathd.service
+ 657ms grub-common.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    1.412413] Run /init as init process
+[    4.260859] systemd[1]: systemd 255.4-1ubuntu8.18 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+
+time_to_benchmark_s=n/a

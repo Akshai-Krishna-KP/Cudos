@@ -1,0 +1,120 @@
+# static 2026-11-20T07:08:02+00:00
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+$ uname -a
+Linux baseline 6.8.0-151-generic #151-Ubuntu SMP PREEMPT_DYNAMIC Wed Nov 11 01:28:36 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+packages_dpkg=987
+rootfs_used_bytes=20026129822
+
+$ df -B1 -x tmpfs -x devtmpfs -x squashfs -x overlay
+Filesystem       1B-blocks        Used   Available Use% Mounted on
+efivarfs            151464      124310       22034  85% /sys/firmware/efi/efivars
+/dev/sda2      36672405504 20223553536 14553026560  59% /
+/dev/sda1       1071624192     9011200  1062612992   1% /boot/efi
+
+$ df -B1 -t squashfs -t overlay
+df: no file systems processed
+[exit 1]
+
+$ findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS
+TARGET                         SOURCE      FSTYPE      OPTIONS
+/                              /dev/sda2   ext4        rw,relatime
+├─/sys                         sysfs       sysfs       rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/firmware/efi/efivars  efivarfs    efivarfs    rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/kernel/security       securityfs  securityfs  rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/fs/cgroup             cgroup2     cgroup2     rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot
+│ ├─/sys/fs/pstore             pstore      pstore      rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/fs/bpf                bpf         bpf         rw,nosuid,nodev,noexec,relatime,mode=700
+│ ├─/sys/kernel/debug          debugfs     debugfs     rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/kernel/tracing        tracefs     tracefs     rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/kernel/config         configfs    configfs    rw,nosuid,nodev,noexec,relatime
+│ └─/sys/fs/fuse/connections   fusectl     fusectl     rw,nosuid,nodev,noexec,relatime
+├─/proc                        proc        proc        rw,nosuid,nodev,noexec,relatime
+│ └─/proc/sys/fs/binfmt_misc   systemd-1   autofs      rw,relatime,fd=32,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=13405
+│   └─/proc/sys/fs/binfmt_misc binfmt_misc binfmt_misc rw,nosuid,nodev,noexec,relatime
+├─/dev                         udev        devtmpfs    rw,nosuid,relatime,size=12060736k,nr_inodes=3015184,mode=755,inode64
+│ ├─/dev/pts                   devpts      devpts      rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000
+│ ├─/dev/shm                   tmpfs       tmpfs       rw,nosuid,nodev,inode64
+│ ├─/dev/hugepages             hugetlbfs   hugetlbfs   rw,nosuid,nodev,relatime,pagesize=2M
+│ └─/dev/mqueue                mqueue      mqueue      rw,nosuid,nodev,noexec,relatime
+├─/run                         tmpfs       tmpfs       rw,nosuid,nodev,noexec,relatime,size=2428212k,mode=755,inode64
+│ ├─/run/lock                  tmpfs       tmpfs       rw,nosuid,nodev,noexec,relatime,size=5120k,inode64
+│ └─/run/user/1000             tmpfs       tmpfs       rw,nosuid,nodev,relatime,size=2428208k,nr_inodes=607052,mode=700,uid=1000,gid=1000,inode64
+└─/boot/efi                    /dev/sda1   vfat        rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro
+
+$ du -sxb /boot /usr /var /opt /lib/modules /lib/firmware /usr/local
+141356035	/boot
+12206631792	/usr
+545475803	/var
+2835175185	/opt
+
+$ installed size by group (dpkg Installed-Size, KiB)
+containers               127577 KiB
+cuda-toolkit+libs       7089165 KiB
+cudnn                   2271580 KiB
+kernel+firmware          917404 KiB
+lab-remote-access          6485 KiB
+nvidia-driver+ctk       1201955 KiB
+other                   1888020 KiB
+
+$ top 25 packages by installed size (KiB)
+1535641	nsight-compute-2026.4.0
+1363695	libcudnn9-static-cuda-13
+983784	libcublas-dev-13-5
+907124	libcudnn9-cuda-13
+595494	libcublas-13-5
+531737	libcusparse-dev-13-5
+457478	libnvidia-compute
+398890	libnvidia-gl
+281888	libcusolver-13-5
+243104	libcusparse-13-5
+242908	libcufft-dev-13-5
+231714	libcufft-13-5
+212572	libcusolver-dev-13-5
+209493	libnpp-dev-13-5
+182008	libnpp-13-5
+173408	libnvvm-13-5
+155953	cuda-nvrtc-dev-13-5
+151315	libnvjitlink-dev-13-5
+146214	cuda-nvcc-13-5
+145426	cuda-cupti-13-5
+145042	cuda-nvrtc-13-5
+140245	libllvm20
+130260	snapd
+129589	cuda-gdb-13-5
+126760	libnvidia-gpucomp
+
+$ lab-only remote-access packages (excluded from 'identical functionality')
+268	avahi-daemon
+324	iw
+2101	openssh-server
+25	wireless-regdb
+3767	wpasupplicant
+
+$ sh -c ls /var/lib/containers/storage 2>/dev/null && podman images 2>/dev/null
+db.sql
+defaultNetworkBackend
+libpod
+overlay
+overlay-containers
+overlay-images
+overlay-layers
+storage.lock
+tmp
+userns.lock
+REPOSITORY  TAG         IMAGE ID    CREATED     SIZE
+

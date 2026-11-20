@@ -1,0 +1,17 @@
+[12:25:02] == baseline-laptop2: 5 boots, 7 bench runs, host 10.21.31.90
+[12:25:05] boot 1/5: rebooting
+[12:26:04] boot 1: Startup finished in 15.511s (firmware) + 6.695s (loader) + 3.759s (kernel) + 20.681s (userspace) = 46.648s 
+[12:26:04] boot 2/5: rebooting
+[12:27:07] boot 2: Startup finished in 15.516s (firmware) + 6.682s (loader) + 3.922s (kernel) + 19.537s (userspace) = 45.658s 
+[12:27:07] boot 3/5: rebooting
+[12:28:11] boot 3: Startup finished in 15.533s (firmware) + 6.735s (loader) + 3.887s (kernel) + 19.513s (userspace) = 45.668s 
+[12:28:11] boot 4/5: rebooting
+[12:29:11] boot 4: Startup finished in 16.671s (firmware) + 6.692s (loader) + 3.811s (kernel) + 22.823s (userspace) = 49.999s 
+[12:29:11] boot 5/5: rebooting
+[12:30:12] boot 5: Startup finished in 15.537s (firmware) + 6.695s (loader) + 3.821s (kernel) + 20.170s (userspace) = 46.225s 
+[12:30:14] idling 266 s before RAM measurement
+[12:37:48] ram idle done
+[12:38:16] static done
+[12:38:16] benchmark: 7 runs
+[12:39:21] bench done
+[12:39:38] raw results in /home/krishna/OS/docs/results/phase1/baseline-laptop2/raw

@@ -1,0 +1,31 @@
+# ram-idle 2026-11-20T07:07:47+00:00 uptime_s=487.59
+$ free -m
+               total        used        free      shared  buff/cache   available
+Mem:           23713        1029       22539           1         414       22683
+Swap:           4095           0        4095
+
+pss_total_kib=137377
+
+$ top 15 processes by PSS (KiB)
+   23200 /sbin/multipathd -d -s 
+   18294 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wa
+   11393 /usr/lib/systemd/systemd-journald 
+    7323 /usr/sbin/ModemManager 
+    6846 /usr/libexec/udisks2/udisksd 
+    6378 /usr/bin/nvidia-powerd 
+    6083 /sbin/init 
+    4803 /usr/lib/systemd/systemd-udevd 
+    4693 /usr/sbin/wpa_supplicant -i wlo1 -D nl80211 -c /etc/wpa_supplicant/trackc-wifi.c
+    4249 /usr/lib/systemd/systemd-resolved 
+    4010 /usr/lib/polkit-1/polkitd --no-debug 
+    3992 /usr/lib/systemd/systemd --user 
+    3408 /usr/sbin/rsyslogd -n -iNONE 
+    3107 /usr/lib/systemd/systemd-networkd 
+    2677 sshd: trackc [priv]  
+
+$ sh -c systemctl list-units --type=service --state=running --no-legend --no-pager | wc -l
+23
+
+$ sh -c ps -e --no-headers | wc -l
+261
+
