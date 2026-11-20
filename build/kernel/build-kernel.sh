@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# build-kernel.sh: build the Track C kernel (Phase 3). Runs INSIDE the kernel builder:
+#   build/kernel/run.sh   (wrapper that builds/starts the container)
+# Config = Debian 13's 6.12 config (from the pinned, cached linux-image .deb)
+#        -> make localmodconfig with the modules loaded on both laptops (build/kernel/lsmod-*.txt)
+#        -> build/kernel/trackc.config fragment.
+# Output: out/kernel/linux-image-*-trackc_*.deb, linux-headers-*.deb, config-<ver>-trackc
+set -euo pipefail
+SRC=/src; source "$SRC/build/versions.env"
+V=$KERNEL_VERSION; O=$SRC/out/kernel; W=/build
+rm -rf "$O"; mkdir -p "$O" "$W"
+tar -xf "$SRC/cache/kernel/linux-$V.tar.xz" -C "$W"
+cd "$W/linux-$V"
+deb=$(ls "$SRC"/cache/mmdebstrap-debs/linux-image-6.12.*+deb13-amd64_*.deb | head -1)
+dpkg-deb --fsys-tarfile "$deb" | tar -xO --wildcards './boot/config-*' > .config
+cat "$SRC"/build/kernel/lsmod-*.txt | sort -u | awk '{print $1, 0, 0}' > /tmp/lsmod
+make -s olddefconfig
+yes '' | make -s LSMOD=/tmp/lsmod localmodconfig >/dev/null 2>&1
+scripts/kconfig/merge_config.sh -m -O . .config "$SRC/build/kernel/trackc.config" >/dev/null
+make -s olddefconfig
+echo "modules enabled: $(grep -c '=m$' .config)   built-in: $(grep -c '=y$' .config)"
+export KBUILD_BUILD_TIMESTAMP="@$SOURCE_DATE_EPOCH" KBUILD_BUILD_USER=trackc KBUILD_BUILD_HOST=trackc-builder
+make -j"$(nproc)" bindeb-pkg KDEB_PKGVERSION="$V-1" DPKG_FLAGS=-d >/tmp/build.log 2>&1 || { tail -40 /tmp/build.log; exit 1; }
+cp .config "$O/config-$V-trackc"
+mv ../linux-image-*.deb ../linux-headers-*.deb "$O/"
+ls -l "$O"
