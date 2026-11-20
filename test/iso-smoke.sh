@@ -7,6 +7,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"; ISO=${1:-$REPO/out/iso/trackc-gpu-appl
 RES=$REPO/docs/results/iso; mkdir -p "$RES"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
 fail=0
 for mode in cdrom usb; do
+ for attempt in 1 2 3; do
   cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$W/vars.fd"; L=$RES/qemu-$mode.log; : > "$L"
   if [[ $mode == cdrom ]]; then D=(-cdrom "$ISO")
   else D=(-drive "file=$ISO,format=raw,if=none,id=u,readonly=on" -device qemu-xhci -device usb-storage,drive=u); fi
@@ -16,6 +17,11 @@ for mode in cdrom usb; do
     -display none -serial file:"$L" -nic none & q=$!
   t=0; while (( t < 180 )); do grep -aq 'TRACKC-SELFTEST RESULT' "$L" && grep -aq 'login:' "$L" && break; sleep 2; t=$((t+2)); done
   kill $q 2>/dev/null; wait $q 2>/dev/null
+  # OVMF sometimes stalls on emulated USB before booting anything (no "BdsDxe" line): that is
+  # the emulator, not the ISO, so retry; any failure AFTER the firmware started counts.
+  if ! grep -aq BdsDxe "$L"; then echo "$mode: attempt $attempt: emulated firmware never started booting, retrying"; continue; fi
+  break
+ done
   r=$(tr -d '\r' < "$L" | grep -ao 'TRACKC-SELFTEST RESULT [A-Z]*' | tail -1)
   echo "$mode: ${t}s, ${r:-no selftest result}, login prompt: $(grep -aq 'login:' "$L" && echo yes || echo NO)"
   [[ $r == *PASS ]] && grep -aq 'login:' "$L" || fail=1
