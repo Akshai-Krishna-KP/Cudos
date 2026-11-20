@@ -20,7 +20,13 @@ the **Track C GPU appliance** by default. Optional: Laptop 1 on the same phone h
    cuda-dev ./matmul 2048        # CPU 2.4 s, CUDA kernel 19 ms (126x), cuBLAS 2.5 ms (971x)
    cuda-dev ./pi 1000000000      # 1 billion random points: CPU 13 s, GPU 10 ms
    ```
-   Then live-code a tiny kernel: `cuda-dev` opens a shell with `nvcc`; files in `~/cuda` survive reboots.
+   Then live-code a tiny kernel:
+   ```
+   cd ~/cuda && nano hello.cu        # write a __global__ kernel, Ctrl-O to save, Ctrl-X to exit
+   cuda-dev nvcc -arch=sm_89 -o hello hello.cu
+   cuda-dev ./hello
+   ```
+   Files in `~/cuda` survive reboots. `cuda-dev` alone opens a shell with `nvcc`.
 5. **Locked down while usable:**
    * `findmnt /` shows squashfs `ro`; `sudo touch /usr/x` is refused.
    * `which nvcc gcc` on the host finds nothing; the toolkit lives in a container.
