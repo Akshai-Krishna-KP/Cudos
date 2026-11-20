@@ -23,6 +23,7 @@ D=$(readlink -f "/dev/disk/by-id/usb-SanDisk_Cruzer_Blade_${SERIAL}-0:0")
 root=$(findmnt -no SOURCE /)
 [[ $(lsblk -no PKNAME "$root") == "${D#/dev/}" && $(lsblk -dno TRAN "$D") == usb ]] \
   || { echo "refusing: $D is not the USB stick holding the running root" >&2; exit 1; }
+[[ $(findmnt -no FSTYPE /) == squashfs ]] && { echo "refusing: running the custom image itself; boot the baseline first" >&2; exit 1; }
 if [[ ! -e /dev/disk/by-partlabel/trackc-root ]]; then
   echo "creating p3 trackc-root (8 GiB) and p4 trackc-persist on $D"
   sgdisk -n 3:0:+8G -t 3:8300 -c 3:trackc-root -n 4:0:0 -t 4:8300 -c 4:trackc-persist "$D"

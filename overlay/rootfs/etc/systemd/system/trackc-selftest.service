@@ -5,7 +5,7 @@ After=local-fs.target
 [Service]
 Type=oneshot
 # Also copy to the serial port so the QEMU smoke test (serial log) sees it; harmless without one.
-ExecStart=/bin/sh -c '/usr/local/sbin/trackc-selftest | tee /dev/ttyS0'
+ExecStart=/bin/bash -c 'set -o pipefail; /usr/local/sbin/trackc-selftest | (tee /dev/ttyS0 2>/dev/null || true)'
 StandardOutput=journal+console
 
 [Install]

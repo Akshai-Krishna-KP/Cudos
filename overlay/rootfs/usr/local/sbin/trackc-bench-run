@@ -9,7 +9,8 @@ IMG=localhost/trackc-bench:0.1
 [ -d "$XDG_RUNTIME_DIR" ] || XDG_RUNTIME_DIR=$(mktemp -d)
 podman image exists "$IMG" || podman load -q -i /usr/share/trackc/trackc-bench.tar >/dev/null
 run() {
-  podman run --rm --cgroups=disabled --network=none --read-only --cap-drop=all \
+  # No --read-only: the NVIDIA CDI hook must write ld.so.cache inside the container.
+  podman run --rm --cgroups=disabled --network=none --cap-drop=all \
     --security-opt=no-new-privileges \
     --device nvidia.com/gpu=all "$IMG" "$@"
 }
