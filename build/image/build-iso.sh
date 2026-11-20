@@ -20,6 +20,7 @@ ukify build --linux="$R/boot/vmlinuz-$KVER" --initrd="$R/boot/initrd.img-$KVER" 
 mksquashfs "$R" "$T/live/rootfs.squashfs" -noappend -comp zstd -Xcompression-level 19 -b 1M \
   -reproducible -wildcards -e 'boot/*' -quiet
 cp "$SRC/out/trackc-cuda-dev.tar" "$T/images/"
+echo "Track C GPU appliance live medium" > "$T/live/trackc-live.id"   # found by initramfs local-top/trackc-live
 cp "$O/trackc-live.efi" "$T/EFI/BOOT/BOOTX64.EFI"
 cp "$SRC/overlay/esp-portable/README.txt" "$T/README.txt"
 # EFI system partition image for El Torito / the appended GPT partition.
