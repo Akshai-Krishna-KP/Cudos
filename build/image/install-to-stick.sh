@@ -18,7 +18,7 @@ S=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes "trackc@$HOST")
 
 "${S[@]}" sudo bash -s "$SERIAL" "$WIPE" <<'REMOTE_PART'
 set -euo pipefail
-SERIAL=$1; WIPE=$2
+SERIAL=$1; WIPE=${2:-}
 D=$(readlink -f "/dev/disk/by-id/usb-SanDisk_Cruzer_Blade_${SERIAL}-0:0")
 root=$(findmnt -no SOURCE /)
 [[ $(lsblk -no PKNAME "$root") == "${D#/dev/}" && $(lsblk -dno TRAN "$D") == usb ]] \
