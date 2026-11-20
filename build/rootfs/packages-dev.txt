@@ -7,3 +7,5 @@ sudo              # NOPASSWD sudo for non-interactive measurement scripts
 firmware-realtek  # Laptop 2 Wi-Fi (rtw89_8852be) firmware, non-free-firmware
 firmware-iwlwifi  # Laptop 1 Wi-Fi (Intel) firmware, non-free-firmware
 iproute2          # ip, for debugging the network
+nano              # text editor for writing CUDA code on the appliance (~1 MB)
+vim-tiny          # vi for people who prefer it (~1.5 MB)
