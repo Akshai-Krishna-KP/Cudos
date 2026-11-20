@@ -61,11 +61,11 @@ University OS Lab group assignment: **"Application-Specific Linux Distribution f
 | Root FS | **squashfs (zstd), read-only** + overlayfs. Persistent partition for `/var/lib/containers`, logs, results. `nodev,nosuid,noexec` on `/tmp`, `/var/tmp`, `/home`. **No `noexec` on container storage.** |
 | First boot | `gpu-autoconfig.service` detects the GPU (sysfs PCI IDs), configures the shipped **newest-LTS** driver (chosen + signed at build time), generates CDI. Optional `gpu-driver-update` fetches our prebuilt signed bundle for a newer LTS. See `docs/design/first-boot-gpu-and-dev.md`. |
 | CUDA dev | Users SSH in and use `cuda-dev` (rootless Podman CUDA devel container on the persist partition). No nvcc on the host. |
-| Boot | Headless text console on the iGPU; dGPU used for compute only. Secure Boot disabled for demo (documented limitation). Stretch: signed UKI + dm-verity. |
+| Boot | Headless text console on the iGPU; dGPU used for compute only. **Secure Boot off, no module/UKI signing (user decision 2026-11-20)**; documented limitation. |
 
 ### Security hardening (implement at least these)
 1. Read-only root + restrictive mount flags.
-2. Kernel lockdown (`integrity`) with module signing (we sign the NVIDIA modules at build time).
+2. ~~Kernel lockdown with module signing~~: dropped by user decision (no Secure Boot signing). Replaced by: default-deny nftables + no compiler/package metadata in the image.
 3. Sysctl hardening: `kptr_restrict`, `dmesg_restrict`, `unprivileged_bpf_disabled`, Yama `ptrace_scope`.
 4. Non-root service user, rootless Podman, `--cap-drop=ALL`, `no-new-privileges`, default seccomp.
 5. Minimal attack surface: SSH disabled unless a key file is provisioned on the USB at first boot; then key-only, no root login. Default-deny nftables (only TCP/22 when SSH is on).
