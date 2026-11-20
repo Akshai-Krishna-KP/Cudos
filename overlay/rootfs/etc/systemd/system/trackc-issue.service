@@ -1,10 +1,11 @@
 [Unit]
 Description=Console banner with GPU status and boot benchmark result
-After=trackc-bench.service gpu-autoconfig.service
+After=gpu-autoconfig.service trackc-bench.service
 Wants=trackc-bench.service
 
 [Service]
-Type=oneshot
+# exec: waits in the background for the benchmark result, never blocks boot.
+Type=exec
 ExecStart=/usr/local/sbin/trackc-issue
 
 [Install]

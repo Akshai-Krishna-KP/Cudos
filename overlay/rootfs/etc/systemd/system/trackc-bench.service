@@ -4,7 +4,8 @@ Requires=gpu-autoconfig.service
 After=gpu-autoconfig.service nvidia-powerd.service
 
 [Service]
-Type=oneshot
+# exec, not oneshot: the health check must not hold up boot (multi-user.target).
+Type=exec
 RemainAfterExit=yes
 User=bench
 Group=bench

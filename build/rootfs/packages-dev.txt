@@ -2,6 +2,7 @@
 # release image and accounted for separately in every measurement.
 openssh-server    # key-only SSH for the lab user
 wpasupplicant     # hotspot Wi-Fi
+wireless-regdb    # Wi-Fi regulatory database (else cfg80211: failed to load regulatory.db)
 sudo              # NOPASSWD sudo for non-interactive measurement scripts
 firmware-realtek  # Laptop 2 Wi-Fi (rtw89_8852be) firmware, non-free-firmware
 firmware-iwlwifi  # Laptop 1 Wi-Fi (Intel) firmware, non-free-firmware

@@ -1,27 +1,33 @@
-# Live demo script (about 5 minutes)
+# Live demo script (about 6 minutes)
 
-Setup before the talk: Laptop 2 on AC power, the 64 GB stick plugged in, Secure Boot off.
-The stick boots the **Track C GPU appliance** by default (`build/image/set-boot.sh <ip> default-trackc`).
-Optional: Laptop 1 on the same hotspot for the SSH part.
+Setup: Laptop 2 on AC power, the 64 GB stick plugged in, Secure Boot off. The stick boots
+the **Track C GPU appliance** by default. Optional: Laptop 1 on the same phone hotspot for SSH.
 
-1. **Cold boot** (about 40 s). Power on Laptop 2 and say: "No login, no setup. It boots
-   straight into the appliance."
-2. **Dashboard on screen** (tty1). Point out:
-   * GPU name, temperature, power, clocks: live NVML metrics every 2 s.
-   * "Benchmark runs" counter: the CUDA container started by itself about 20 s after the
-     kernel, as the unprivileged user `bench`, and repeats every 60 s.
-   * Each result line: memory bandwidth (GB/s), cuBLAS SGEMM (TFLOP/s), kernel-launch latency (µs).
-3. **Read-only root.** From Laptop 1: `ssh trackc@<ip>` (dev image), then:
-   * `findmnt /` shows squashfs, `ro`.
-   * `sudo touch /usr/x` fails with "Read-only file system".
-   * `findmnt /tmp` shows `nodev,nosuid,noexec`.
-   * `sudo journalctl -u trackc-selftest -b` shows every check PASS.
-4. **Container security.**
-   * `ps -o user,cmd -C trackc_bench` (while a run is active): user is not root.
-   * `sudo cat /usr/local/sbin/trackc-bench-run`: `--cap-drop=all`, `no-new-privileges`, `--network=none`, rootless Podman.
-   * `sudo nft list ruleset`: input policy drop.
-5. **Lean.** `dpkg -l | grep -c ^ii` gives about 200 packages (stock: 987).
-   `which gcc nvcc` finds nothing: no compiler on the appliance.
-6. **Back to stock Ubuntu** (optional): `build/image/set-boot.sh <ip> once-baseline`, then reboot.
+1. **Cold boot** (about 40 s). Power on Laptop 2: "No setup. On boot it finds the GPU,
+   loads the NVIDIA driver, turns on persistence mode and Dynamic Boost, and runs a CUDA
+   health check in a locked-down container."
+2. **Console banner** (tty1, above the login prompt): GPU name, driver 620.70.06, CUDA 13.5,
+   temperature, power, Dynamic Boost, the **boot benchmark result** (about 228 GB/s,
+   8 TFLOP/s) and the IP address.
+3. **Log in** as `trackc` (console password, or `ssh trackc@<ip>` with the lab key):
+   * `gpu-status`: the same report on demand.
+   * `gpu-watch`: live metrics every second (Ctrl-C to quit). Leave it running in a second
+     terminal (Alt+F2) while step 4 runs, to show the GPU working.
+4. **Your own CUDA code** (the real-world part):
+   ```
+   cd ~/cuda/examples
+   cuda-dev make                 # nvcc runs in the CUDA container, not on the host
+   cuda-dev ./matmul 2048        # CPU 2.4 s, CUDA kernel 19 ms (126x), cuBLAS 2.5 ms (971x)
+   cuda-dev ./pi 1000000000      # 1 billion random points: CPU 13 s, GPU 10 ms
+   ```
+   Then live-code a tiny kernel: `cuda-dev` opens a shell with `nvcc`; files in `~/cuda` survive reboots.
+5. **Locked down while usable:**
+   * `findmnt /` shows squashfs `ro`; `sudo touch /usr/x` is refused.
+   * `which nvcc gcc` on the host finds nothing; the toolkit lives in a container.
+   * `sudo nft list ruleset`: input policy drop, SSH only.
+   * `gpu-bench`: re-run the health benchmark as a normal user.
+6. **Lean:** `dpkg -l | grep -c ^ii` is about 200 (stock: 987); `uname -r` shows our own
+   kernel, `6.12.118-trackc`.
 
-If anything fails live, fall back to the recorded measurements in `docs/results/` and the slides.
+Fallback if something fails live: recorded results in `docs/results/` and the slides.
+Back to stock Ubuntu: `build/image/set-boot.sh <ip> once-baseline`, then reboot.

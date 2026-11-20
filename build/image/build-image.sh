@@ -14,7 +14,7 @@ source "$SRC/build/versions.env"
 ESP_MIB=256; PERSIST_MIB=512
 
 KVER=$(ls "$R/lib/modules" | sort -V | tail -1)
-CMDLINE="root=PARTLABEL=trackc-root rootfstype=squashfs ro console=ttyS0,115200 console=tty0 quiet loglevel=3 modprobe.blacklist=nouveau panic=10"
+CMDLINE="root=PARTLABEL=trackc-root rootfstype=squashfs ro console=ttyS0,115200 console=tty0 quiet loglevel=3 modprobe.blacklist=nouveau systemd.gpt_auto=0 panic=10"
 echo "kernel $KVER"
 
 # 1. UKI: one signed-able EFI binary, no bootloader needed (OVMF/laptop firmware boots it directly).
