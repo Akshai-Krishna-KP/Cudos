@@ -39,7 +39,7 @@ normally set up a CUDA box.
 ## 4. Custom image architecture
 
 ```
- UEFI -> GRUB (on stick) -> trackc.efi (UKI: Debian kernel 6.12 LTS + initramfs + cmdline)
+ UEFI -> GRUB (on stick) -> trackc.efi (UKI: our kernel 6.12.118-trackc + initramfs + cmdline)
    initramfs: mount squashfs root (PARTLABEL=trackc-root) read-only
               /etc  = overlay, upper on tmpfs        (config resets every boot)
               /var  = overlay, upper on persist ext4 (logs, results survive)
@@ -47,20 +47,24 @@ normally set up a CUDA box.
    systemd:
      gpu-autoconfig.service   sysfs PCI scan -> modprobe nvidia (open modules) ->
                               device nodes -> persistence mode -> CDI spec (/run/cdi)
-     trackc-bench.service     user "bench" (non-root) -> rootless Podman ->
-                              CUDA container (GPU via CDI) -> results JSONL
-     trackc-dashboard.service live nvidia-smi metrics + latest results on tty1
+     nvidia-powerd.service    Dynamic Boost (laptop GPU power management)
+     trackc-bench.service     health check ONCE per boot: user "bench" (non-root) ->
+                              rootless Podman -> CUDA container (GPU via CDI) -> result
+     trackc-issue.service     console banner above the login prompt: GPU, driver,
+                              CUDA, Dynamic Boost, boot benchmark result, IP address
      nftables.service         default-deny firewall
+   user tools: gpu-status, gpu-watch (live NVML metrics, Ctrl-C), gpu-bench,
+               cuda-dev (CUDA 13.5 toolkit container: compile + run your own code)
 ```
 
 | Area | Decision | Why / rejected alternatives |
 |---|---|---|
 | Build | `mmdebstrap --variant=minbase` against a pinned snapshot.debian.org date, inside a pinned Podman builder container | reproducible, rootless, no host changes; Yocto/Buildroot rejected (no x86 NVIDIA/CUDA packaging) |
 | Base | Debian 13 "trixie" | NVIDIA ships a Debian 13 repo with the same driver (620.70.06) and CTK (1.20.2) versions as the baseline |
-| Kernel | Debian `linux-image-amd64` 6.12.117 (LTS) | custom-trimmed kernel (Phase 3) deferred, see 9 |
+| Kernel | **our kernel**: kernel.org 6.12.118 LTS, Debian's config trimmed with `localmodconfig` to the modules loaded on both laptops (369 modules vs ~4,000), plus `build/kernel/trackc.config` (no signing, no debug info) | builds in ~5 min; UKI 22 MB vs 46 MB; Debian's kernel kept as a build option (`build-rootfs.sh <variant> debian`) |
 | NVIDIA kernel driver | open GPU kernel modules built with DKMS **at image build time**; then DKMS, compilers and kernel headers are purged from the image | no compiler on the appliance; only 5 `.ko` files ship |
 | NVIDIA userspace | only `libcuda1`, `libnvidia-ml1`, GSP firmware, `nvidia-modprobe`, Container Toolkit, plus the `nvidia-smi` binary | the full driver metapackage pulls X/GL/Vulkan/video libraries a headless box never uses |
-| CUDA | **not on the host**. The benchmark container (multi-stage) carries only the binary + cuBLAS runtime; cudart linked statically | container built offline from cached debs (`build/container/`) |
+| CUDA | **not on the host**. The health-check container (multi-stage) carries only the binary + cuBLAS runtime; users get the full compiler through `cuda-dev` (CUDA 13.5 devel container, 3.6 GB, on the persist partition, not in the image) | both containers built offline from cached debs (`build/container/`) |
 | Containers | rootless Podman + CDI | Docker rejected: needs a root daemon |
 | Root FS | squashfs (zstd -19, 1 MiB blocks) read-only + overlays | immutable, compressed, tamper-evident |
 | Boot | Unified Kernel Image chainloaded from the stick's GRUB | one file to sign later (Secure Boot is off for now) |
@@ -70,6 +74,20 @@ normally set up a CUDA box.
 * **dev**: release + lab remote access (key-only SSH, hotspot Wi-Fi, NOPASSWD sudo,
   Wi-Fi firmware). Needed only because the target laptop is driven over SSH from
   Laptop 1. Measured separately and accounted for in every comparison.
+
+### Using it: your own CUDA code
+
+Log in on the console or over SSH (dev image, key only) and run `cuda-dev`: nvcc, gcc,
+cuBLAS, cuRAND, cuFFT and NVRTC in a rootless container with the GPU, no network, no
+capabilities. The workspace `~/cuda` lives on the persistent partition (`/home` is noexec).
+Examples (`benchmark/examples/`) print CPU vs GPU time; measured on Laptop 2
+(`docs/results/cuda-dev/examples-laptop2.txt`):
+
+| Example | CPU, 1 core | GPU | Speed-up |
+|---|---|---|---|
+| Matrix multiply 2048², our tiled CUDA kernel | 2,426 ms | 19.2 ms | 126× |
+| Matrix multiply 2048², cuBLAS | 2,426 ms | 2.5 ms | 971× |
+| Monte Carlo π, 10⁹ points (cuRAND) | 13.4 s (scaled from 5×10⁷) | 10.5 ms | 1,275× |
 
 ## 5. Security hardening
 
@@ -85,60 +103,59 @@ normally set up a CUDA box.
    `perf_event_paranoid=3`, protected FIFOs/regular files, no ICMP redirects.
 4. **Default-deny nftables firewall**: release image accepts nothing inbound; the dev image
    opens only TCP/22 (+DHCP replies).
-5. **Minimal attack surface**: 171 packages (release) vs 987, no compiler, no package
+5. **Minimal attack surface**: 170 packages (release) vs 987, no compiler, no package
    manager metadata, no SSH in release; internal disks of the host laptop forced read-only by udev.
 
-Not done (documented limitations): kernel lockdown + module signing (the NVIDIA modules are
-unsigned, so Secure Boot must be disabled), dm-verity, AppArmor profile.
+Not done: Secure Boot, kernel lockdown and module/UKI signing (dropped by decision: the
+NVIDIA modules and UKI are unsigned and Secure Boot must be off), dm-verity, AppArmor.
 
 ## 6. Results
 
 Laptop 2, AC power, same 64 GB stick, 2026-11-20. Stock: `docs/results/phase1/baseline-laptop2/`;
-custom (dev variant, which also runs SSH/Wi-Fi for remote measurement):
-`docs/results/phase8/custom-dev-laptop2/`; image sizes from the build (`measure/image-size.sh`).
+custom (dev image on our 6.12.118-trackc kernel; it also runs SSH/Wi-Fi for remote measurement):
+`docs/results/phase8/custom-kernel-laptop2/`; image sizes from the build (`measure/image-size.sh`).
 Generated by `measure/final-table.py` (`docs/results/phase8/comparison.md`):
 
 ### Size
 
 | Metric | Stock Ubuntu + NVIDIA stack | Custom release | Custom dev (lab access) | Reduction (release) |
 |---|---|---|---|---|
-| Root filesystem, uncompressed (MiB) | 19,098 | 1,276 | 1,427 | 93% less |
-| On the medium (MiB) (stock: ext4 used; custom: squashfs + UKI) | 19,098 | 822 | 877 | 96% less |
-| Compressed squashfs (MiB) | n/a | 775 | 831 | |
+| Root filesystem, uncompressed (MiB) | 19,098 | 1,192 | 1,344 | 94% less |
+| On the medium (MiB) (stock: ext4 used; custom: squashfs + UKI) | 19,098 | 719 | 775 | 96% less |
+| Compressed squashfs (MiB) | n/a | 697 | 752 | |
 | of which: CUDA benchmark container archive (MiB) | n/a | 466 | 466 | |
-| dpkg packages | 987 | 171 | 203 | 83% less |
+| dpkg packages | 987 | 170 | 203 | 83% less |
 
 ### Boot time on the same USB stick and laptop (median of 5 boots, seconds)
 
 | Phase | Stock | Custom dev | Reduction |
 |---|---|---|---|
-| firmware | 15.53 | 15.54 | same (within 1%) |
-| loader | 6.70 | 4.74 | 29% less |
-| kernel | 3.82 | 3.62 | 5% less |
-| userspace | 20.17 | 14.22 | 30% less |
-| total | 46.23 | 38.12 | 18% less |
-| kernel start to benchmark running | n/a (no auto-start) | 20 | |
+| firmware | 15.53 | 15.58 | same (within 1%) |
+| loader | 6.70 | 3.11 | 54% less |
+| kernel | 3.82 | 4.03 | 6% more |
+| userspace | 20.17 | 14.18 | 30% less |
+| total | 46.23 | 36.85 | 20% less |
+| kernel start to benchmark running | n/a (no auto-start) | 19 | |
 
 ### RAM (idle after at least 5 min; peak during the GPU benchmark)
 
 | Metric | Stock | Custom dev | Reduction |
 |---|---|---|---|
-| Idle used, `free -m` (MiB) | 1029 | 855 | 17% less |
-| Idle PSS, all processes (MiB) | 134 | 66 | 51% less |
-| Running services | 23 | 12 | 48% less |
-| Peak used during benchmark (MiB) | 1452 | 1235 | 15% less |
+| Idle used, `free -m` (MiB) | 1029 | 812 | 21% less |
+| Idle PSS, all processes (MiB) | 134 | 72 | 46% less |
+| Running services | 23 | 11 | 52% less |
+| Peak used during benchmark (MiB) | 1452 | 1236 | 15% less |
 
 ### GPU benchmark (median of 7 runs; stock = native binary, custom = rootless container)
 
 | Metric | Stock | Custom | Difference |
 |---|---|---|---|
-| Memory copy bandwidth (GB/s) | 228.39 | 228.08 | -0.1% |
-| cuBLAS SGEMM N=4096 (TFLOP/s) | 8.42 | 8.13 | -3.5% |
-| Kernel launch + sync (µs) | 4.37 | 4.37 | +0.0% |
-| Async launch (µs/launch) | 1.80 | 1.80 | -0.2% |
+| Memory copy bandwidth (GB/s) | 228.39 | 227.54 | -0.4% |
+| cuBLAS SGEMM N=4096 (TFLOP/s) | 8.42 | 7.72 | -8.3% |
+| Kernel launch + sync (µs) | 4.37 | 4.46 | +2.1% |
+| Async launch (µs/launch) | 1.80 | 1.80 | -0.1% |
 
-Max GPU temperature: stock 83.08 °C, custom 83.62 °C.
-
+Max GPU temperature: stock 83.08 °C, custom 85.06 °C.
 
 ### 6.1 Dynamic Boost (nvidia-powerd)
 
@@ -155,8 +172,13 @@ it ran cooler (73 vs 83 °C). Stopping `nvidia-powerd` on the stock system repro
   benchmark container archive (mostly cuBLAS) and the full Debian kernel module tree.
 * "Idle used" RAM includes kernel and NVIDIA driver memory that both systems share; per-process
   memory (PSS) shows the userspace difference.
-* GPU: the laptop GPU is power-capped at 55 W and reached ~83 °C in both series; power-cap and
-  thermal clock-event reasons appear in both telemetry logs (`bench-telemetry.csv`).
+* GPU: memory bandwidth and launch latency match stock. SGEMM varies with temperature on this
+  power-capped (55 W) laptop GPU: the custom series' first, coolest run was the fastest of all
+  (8.44 TFLOP/s) and later runs fell to 7.45 as the GPU warmed to 85 °C; stock ranged 7.78-8.60.
+  Earlier custom series on the Debian kernel measured 8.13 TFLOP/s median
+  (`custom-dev-laptop2/`). We read the SGEMM difference as thermal variance, not an OS cost.
+* The kernel stage is 0.2 s longer than stock (4.03 vs 3.82 s); the UKI loader stage is 54%
+  shorter because the boot file is half the size.
 * Not measured: Laptop 1 (not booted from the stick), the release variant's boot/RAM (no remote
   access by design; its size is reported), a "CUDA runtime only" Ubuntu sensitivity baseline.
 
@@ -178,12 +200,11 @@ See `LICENSES/inventory.md`: open-source components and each proprietary NVIDIA 
 
 ## 9. Limitations and future work
 
-* Phase 3, the custom-trimmed kernel (localmodconfig from both laptops), was not done in
-  the time available; the Debian kernel ships ~400 MB of modules for hardware we do not use.
-* NVIDIA modules are unsigned: Secure Boot must be off. Next step: sign modules + UKI with
-  our own key (MOK), enable lockdown=integrity, add dm-verity for the squashfs.
-* Container rootfs is not `--read-only`: the NVIDIA CDI hook writes `ld.so.cache`.
-* Tested on Laptop 2 only; Laptop 1 not booted from the stick.
-* First-boot "newest LTS driver" selection and `gpu-driver-update` (design in
-  `docs/design/first-boot-gpu-and-dev.md`) not implemented; the driver version is chosen
-  and pinned at build time.
+* No Secure Boot / module signing (decision): Secure Boot must be off.
+* Container rootfs is not `--read-only`: the NVIDIA CDI hook writes `ld.so.cache` inside it.
+* Measured on Laptop 2 only; Laptop 1 is checked by hand (`docs/laptop1-test.md`), because the
+  build host cannot drive its own reboot.
+* The driver version is chosen and pinned at build time; a first-boot driver-update path
+  (`docs/design/first-boot-gpu-and-dev.md`) is designed, not built.
+* `cuda-dev` needs its 2 GB toolkit archive copied to the persist partition once
+  (`build/container/install-cudadev.sh`); it is not part of the measured image.
