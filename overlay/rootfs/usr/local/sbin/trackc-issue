@@ -1,0 +1,10 @@
+#!/bin/sh
+# trackc-issue: write the console login banner (/etc/issue, /etc is a tmpfs overlay)
+# with GPU status and the boot benchmark, then redraw the tty1 login prompt.
+{
+  printf '\n  Track C GPU appliance  (\\n, Debian 13, read-only root)\n\n'
+  /usr/local/bin/gpu-status 2>&1 | sed 's/^/  /'
+  printf '\n  Network: \\4\n'
+  printf '  Log in, then:  cuda-dev (compile + run CUDA)  gpu-status  gpu-watch  gpu-bench\n\n'
+} > /etc/issue
+systemctl --no-block restart getty@tty1.service

@@ -1,0 +1,5 @@
+#!/bin/sh
+# gpu-watch: live GPU metrics (NVML) every second. Ctrl-C to quit.
+echo "Live GPU metrics, Ctrl-C to quit"
+exec nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,temperature.gpu,power.draw,clocks.sm,clocks.mem,pstate \
+  --format=csv -l 1

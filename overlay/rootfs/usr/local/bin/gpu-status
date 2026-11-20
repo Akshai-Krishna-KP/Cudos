@@ -1,0 +1,14 @@
+#!/bin/sh
+# gpu-status: one-shot report: GPU, driver, CUDA, Dynamic Boost, boot benchmark result.
+L=/var/lib/trackc-bench/latest.json
+v() { sed -n "s/.*\"$1\":\([^,}]*\).*/\1/p" "$L" 2>/dev/null | tr -d '"'; }
+if ! command -v nvidia-smi >/dev/null || ! nvidia-smi -L >/dev/null 2>&1; then echo "GPU: not available (gpu-autoconfig: journalctl -u gpu-autoconfig)"; exit 1; fi
+nvidia-smi --query-gpu=name,driver_version,memory.total,temperature.gpu,power.draw,pstate,persistence_mode \
+  --format=csv,noheader | awk -F', ' '{printf "GPU:      %s\nDriver:   %s   memory %s   %s C   %s   %s   persistence %s\n",$1,$2,$3,$4,$5,$6,$7}'
+echo "CUDA:     $(nvidia-smi | sed -n 's/.*CUDA UMD Version: *\([0-9.]*\).*/\1/p') driver API, toolkit via cuda-dev (CUDA 13.5)"
+echo "Boost:    nvidia-powerd $(systemctl is-active nvidia-powerd 2>/dev/null)"
+if [ -s "$L" ]; then
+  echo "Boot benchmark: $(v bandwidth_gbs) GB/s memory, $(v sgemm_tflops) TFLOP/s SGEMM, $(v launch_roundtrip_us) us launch"
+else
+  echo "Boot benchmark: $(systemctl is-active trackc-bench 2>/dev/null) (result appears when finished)"
+fi

@@ -1,16 +1,18 @@
 [Unit]
-Description=Track C CUDA benchmark (rootless Podman container, non-root user)
+Description=Track C GPU health check: CUDA benchmark once at boot (rootless container, non-root)
 Requires=gpu-autoconfig.service
-After=gpu-autoconfig.service
+After=gpu-autoconfig.service nvidia-powerd.service
 
 [Service]
+Type=oneshot
+RemainAfterExit=yes
 User=bench
 Group=bench
 RuntimeDirectory=trackc-bench
+RuntimeDirectoryPreserve=yes
 Environment=XDG_RUNTIME_DIR=/run/trackc-bench
 ExecStart=/usr/local/sbin/trackc-bench-run
-Restart=on-failure
-RestartSec=10
+TimeoutStartSec=300
 ProtectSystem=full
 PrivateTmp=yes
 

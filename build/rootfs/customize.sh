@@ -52,9 +52,9 @@ ch useradd --system --create-home --home-dir /var/lib/trackc-bench --shell /usr/
 echo "bench:100000:65536" > "$R/etc/subuid"; echo "bench:100000:65536" > "$R/etc/subgid"
 mkdir -p "$R/usr/share/trackc"
 install -m 644 "$SRC/out/trackc-bench.tar" "$R/usr/share/trackc/trackc-bench.tar"
-ch systemctl enable gpu-autoconfig.service trackc-bench.service trackc-dashboard.service nftables.service nvidia-powerd.service >/dev/null
+ch systemctl enable gpu-autoconfig.service trackc-bench.service trackc-issue.service nftables.service nvidia-powerd.service >/dev/null
 ch systemctl enable trackc-selftest.service >/dev/null   # boot-time check of read-only root + mount flags
-ch systemctl mask getty@tty1.service systemd-timesyncd.service apt-daily.timer apt-daily-upgrade.timer >/dev/null 2>&1 || true
+ch systemctl mask systemd-timesyncd.service apt-daily.timer apt-daily-upgrade.timer >/dev/null 2>&1 || true
 mkdir -p "$R/var/log/journal"
 # No apt metadata or NVIDIA repo config in the image (read-only appliance, no updates in place).
 rm -f "$R/etc/apt/sources.list.d/"*.list
@@ -73,7 +73,7 @@ if [[ $VARIANT == dev ]]; then
   echo "trackc:200000:65536" >> "$R/etc/subuid"; echo "trackc:200000:65536" >> "$R/etc/subgid"
   ln -sfn /var/lib/cuda-work/trackc "$R/home/trackc/cuda"; ch chown -h trackc:trackc /home/trackc/cuda
   install -d "$R/usr/share/trackc/examples"
-  install -m 644 "$SRC/benchmark/samples/vector_add.cu" "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
+  install -m 644 "$SRC"/benchmark/examples/* "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
   # Console fallback login (same generated password as the baseline, from cache/).
   if [[ -f $SRC/cache/baseline-credentials.txt ]]; then
     pw=$(sed -n 's/^password=//p' "$SRC/cache/baseline-credentials.txt")

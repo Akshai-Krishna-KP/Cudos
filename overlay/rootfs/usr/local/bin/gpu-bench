@@ -1,0 +1,12 @@
+#!/bin/sh
+# gpu-bench: run the CUDA benchmark container once, as you, and print the results.
+set -eu
+[ "$(id -u)" != 0 ] || exec runuser -u bench -- env HOME=/var/lib/trackc-bench XDG_RUNTIME_DIR=/run/trackc-bench "$0" "$@"
+cd /
+podman image exists localhost/trackc-bench:0.1 2>/dev/null || echo "gpu-bench: first use, loading the benchmark image..." >&2
+r=$(/usr/local/sbin/trackc-bench-run once --label manual 2>/dev/null)
+v() { echo "$r" | sed -n "s/.*\"$1\":\([^,}]*\).*/\1/p" | tr -d '"'; }
+echo "GPU:              $(v gpu) (sm_$(v sm))"
+echo "Memory bandwidth: $(v bandwidth_gbs) GB/s"
+echo "cuBLAS SGEMM:     $(v sgemm_tflops) TFLOP/s (4096x4096)"
+echo "Kernel launch:    $(v launch_roundtrip_us) us round trip, $(v launch_async_us) us async"
