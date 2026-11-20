@@ -1,0 +1,54 @@
+# boot 2026-11-20T10:45:36+00:00 boot_id=c62742e4-bfe0-411e-94f9-39afed9f3b2b
+$ systemd-analyze
+Startup finished in 15.525s (firmware) + 3.135s (loader) + 4.009s (kernel) + 14.178s (userspace) = 36.848s 
+graphical.target reached after 14.178s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @14.178s
+└─multi-user.target @14.178s
+  └─trackc-issue.service @14.172s +5ms
+    └─trackc-bench.service @14.106s +65ms
+      └─gpu-autoconfig.service @5.995s +8.108s
+        └─basic.target @5.986s
+          └─systemd-pcrphase-sysinit.service @5.977s +8ms
+            └─sysinit.target @5.963s
+              └─systemd-backlight@backlight:nvidia_0.service @13.793s +17ms
+                └─system-systemd\x2dbacklight.slice @4.619s
+                  └─system.slice @722ms
+                    └─-.slice @722ms
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+8.108s gpu-autoconfig.service
+7.975s nvidia-cdi-refresh.service
+7.235s systemd-logind.service
+7.234s trackc-selftest.service
+6.488s wpa_supplicant.service
+3.890s dev-sda3.device
+3.881s dev-disk-by\x2dlabel-TRACKC_PERSIST.device
+3.198s systemd-journal-flush.service
+3.046s systemd-networkd.service
+1.304s nftables.service
+1.191s systemd-tmpfiles-setup.service
+1.167s dbus.service
+ 633ms systemd-tmpfiles-setup-dev-early.service
+ 600ms trackc-wifi-start.service
+ 509ms systemd-rfkill.service
+ 457ms systemd-udevd.service
+ 453ms dev-hugepages.mount
+ 451ms dev-mqueue.mount
+ 450ms run-lock.mount
+ 450ms sys-kernel-debug.mount
+ 449ms sys-kernel-tracing.mount
+ 433ms systemd-remount-fs.service
+ 420ms sys-fs-fuse-connections.mount
+ 398ms systemd-journald.service
+ 371ms systemd-sysctl.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    0.647284] Run /init as init process
+[    4.326464] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+
+time_to_benchmark_s=19

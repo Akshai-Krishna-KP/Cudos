@@ -33,7 +33,8 @@ ls -l "$R/root/keep/ko"
 cp "$R/usr/bin/nvidia-smi" "$R/root/keep/nvidia-smi"
 # firmware-nvidia-gsp must stay although only the dkms package depends on it.
 ch apt-mark manual firmware-nvidia-gsp >/dev/null
-ch apt-mark auto nvidia-kernel-open-dkms nvidia-driver-cuda linux-headers-amd64 dkms >/dev/null
+ch apt-mark auto nvidia-kernel-open-dkms nvidia-driver-cuda dkms libelf1t64 >/dev/null 2>&1 || true
+ch apt-mark auto linux-headers-amd64 >/dev/null 2>&1 || true
 # Purge everything that was only needed to compile the modules. RecommendsImportant=false:
 # otherwise apt keeps the compiler because some installed package merely recommends it.
 NOREC=(-o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false)

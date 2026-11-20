@@ -1,0 +1,58 @@
+# boot 2026-11-20T10:48:09+00:00 boot_id=5b1adf09-6bdb-40fd-ab61-a99abea6e8f1
+$ systemd-analyze
+Startup finished in 15.577s (firmware) + 3.099s (loader) + 4.032s (kernel) + 15.077s (userspace) = 37.787s 
+graphical.target reached after 15.077s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @15.077s
+└─multi-user.target @15.077s
+  └─trackc-issue.service @15.017s +29ms
+    └─trackc-bench.service @14.941s +74ms
+      └─gpu-autoconfig.service @13.146s +1.792s
+        └─basic.target @13.137s
+          └─systemd-pcrphase-sysinit.service @13.128s +9ms
+            └─sysinit.target @13.116s
+              └─systemd-update-done.service @13.089s +25ms
+                └─ldconfig.service @12.939s +149ms
+                  └─systemd-tmpfiles-setup.service @10.180s +2.757s
+                    └─systemd-journal-flush.service @1.301s +8.876s
+                      └─systemd-journald.service @810ms +483ms
+                        └─systemd-journald.socket @784ms
+                          └─system.slice @700ms
+                            └─-.slice @700ms
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+8.876s systemd-journal-flush.service
+4.099s dev-sda3.device
+4.079s dev-disk-by\x2dlabel-TRACKC_PERSIST.device
+3.214s systemd-networkd.service
+2.757s systemd-tmpfiles-setup.service
+1.841s trackc-selftest.service
+1.792s gpu-autoconfig.service
+1.690s nvidia-cdi-refresh.service
+1.374s nftables.service
+1.003s systemd-backlight@leds:platform::kbd_backlight.service
+ 823ms dbus.service
+ 615ms systemd-rfkill.service
+ 582ms systemd-tmpfiles-setup-dev-early.service
+ 490ms systemd-udevd.service
+ 483ms systemd-journald.service
+ 450ms trackc-wifi-start.service
+ 440ms dev-hugepages.mount
+ 439ms dev-mqueue.mount
+ 438ms run-lock.mount
+ 438ms sys-kernel-debug.mount
+ 437ms sys-kernel-tracing.mount
+ 423ms systemd-udev-trigger.service
+ 423ms systemd-sysctl.service
+ 391ms systemd-logind.service
+ 373ms systemd-networkd-persistent-storage.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    0.661238] Run /init as init process
+[    4.352887] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+
+time_to_benchmark_s=21

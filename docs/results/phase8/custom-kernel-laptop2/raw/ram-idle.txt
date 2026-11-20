@@ -1,0 +1,31 @@
+# ram-idle 2026-11-20T10:52:41+00:00 uptime_s=301.79
+$ free -m
+               total        used        free      shared  buff/cache   available
+Mem:           23725         812       22661           1         506       22912
+Swap:              0           0           0
+
+pss_total_kib=74210
+
+$ top 15 processes by PSS (KiB)
+   21984 /usr/lib/systemd/systemd-journald 
+    7641 /sbin/init 
+    6557 /usr/bin/nvidia-powerd 
+    5701 /usr/sbin/wpa_supplicant -i wlo1 -D nl80211 -c /etc/wpa_supplicant/trackc-wifi.c
+    4707 /usr/lib/systemd/systemd-udevd 
+    4349 /usr/lib/systemd/systemd-networkd 
+    3441 sshd-session: trackc [priv]         
+    2790 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups 
+    2622 sudo BENCH_CMD=bash /tmp/trackc-bench-appliance.sh BENCH_RUNS=7 BENCH_START_MARK
+    2509 /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev 
+    2502 /usr/lib/systemd/systemd-logind 
+    2385 sshd-session: trackc@notty          
+    1819 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-
+    1728 podman 
+     822 bash /tmp/trackc-collect.sh /var/lib/trackc/measure ram 
+
+$ sh -c systemctl list-units --type=service --state=running --no-legend --no-pager | wc -l
+11
+
+$ sh -c ps -e --no-headers | wc -l
+270
+

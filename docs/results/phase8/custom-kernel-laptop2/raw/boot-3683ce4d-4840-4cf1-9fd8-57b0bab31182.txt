@@ -1,0 +1,54 @@
+# boot 2026-11-20T10:44:46+00:00 boot_id=3683ce4d-4840-4cf1-9fd8-57b0bab31182
+$ systemd-analyze
+Startup finished in 15.759s (firmware) + 3.107s (loader) + 4.072s (kernel) + 13.129s (userspace) = 36.069s 
+graphical.target reached after 13.129s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @13.129s
+└─multi-user.target @13.129s
+  └─trackc-issue.service @13.118s +10ms
+    └─trackc-bench.service @13.051s +64ms
+      └─gpu-autoconfig.service @10.609s +2.440s
+        └─basic.target @10.598s
+          └─systemd-pcrphase-sysinit.service @10.552s +45ms
+            └─sysinit.target @10.538s
+              └─systemd-backlight@backlight:nvidia_0.service @10.593s +260ms
+                └─system-systemd\x2dbacklight.slice @3.592s
+                  └─system.slice @698ms
+                    └─-.slice @698ms
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+5.467s systemd-journal-flush.service
+4.272s dev-disk-by\x2dlabel-TRACKC_PERSIST.device
+4.182s dev-sda3.device
+3.210s systemd-networkd.service
+3.080s ldconfig.service
+2.440s gpu-autoconfig.service
+2.326s nvidia-cdi-refresh.service
+2.187s trackc-selftest.service
+1.254s nftables.service
+1.018s dbus.service
+ 805ms systemd-tmpfiles-setup-dev-early.service
+ 645ms dev-hugepages.mount
+ 644ms dev-mqueue.mount
+ 643ms run-lock.mount
+ 643ms sys-kernel-debug.mount
+ 642ms sys-kernel-tracing.mount
+ 627ms systemd-remount-fs.service
+ 621ms sys-fs-fuse-connections.mount
+ 511ms ssh.service
+ 496ms sys-kernel-config.mount
+ 466ms systemd-udevd.service
+ 462ms systemd-rfkill.service
+ 457ms trackc-wifi-start.service
+ 429ms systemd-sysctl.service
+ 425ms systemd-journald.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    0.685186] Run /init as init process
+[    4.389823] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+
+time_to_benchmark_s=19

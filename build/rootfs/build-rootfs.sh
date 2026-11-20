@@ -43,6 +43,8 @@ NV_KEEP="$NV_KEEP,nvidia-container-toolkit=$C,nvidia-container-toolkit-base=$C,l
 # Build-only: compiled/extracted, then purged (modules + nvidia-smi binary are kept).
 NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,dkms"
 [[ $KERNEL == debian ]] && NV_BUILD="$NV_BUILD,linux-headers-amd64"
+# trackc kernel headers run objtool, which links libelf (build-only; autoremoved after).
+[[ $KERNEL == trackc ]] && NV_BUILD="$NV_BUILD,libelf1t64"
 
 mmdebstrap \
   --variant=minbase \
