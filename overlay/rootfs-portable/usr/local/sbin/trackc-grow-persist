@@ -1,0 +1,22 @@
+#!/bin/sh
+# trackc-grow-persist: first boot after flashing the image to a bigger stick: grow the
+# persist partition (TRACKC_PERSIST) to the end of the boot disk and grow ext4 online.
+# Only touches the disk that holds the running squashfs root, only if persist is its
+# last partition and at least 256 MiB are free behind it. Idempotent.
+set -eu
+P=$(readlink -f /dev/disk/by-label/TRACKC_PERSIST 2>/dev/null) || exit 0
+R=$(readlink -f /dev/disk/by-partlabel/trackc-root)
+D=/dev/$(lsblk -no PKNAME "$P"); [ "$D" = "/dev/$(lsblk -no PKNAME "$R")" ] || { echo "persist not on boot disk"; exit 0; }
+N=$(cat "/sys/class/block/${P##*/}/partition")
+last=$(sgdisk -p "$D" | awk '/^ +[0-9]+ /{n=$1} END{print n}')
+[ "$N" = "$last" ] || { echo "persist is not the last partition"; exit 0; }
+start=$(sgdisk -i "$N" "$D" | awk '/First sector/{print $3}')
+guid=$(sgdisk -i "$N" "$D" | awk '/Partition unique GUID/{print $4}')
+end=$(sgdisk -i "$N" "$D" | awk '/Last sector/{print $3}')
+sgdisk -e "$D" >/dev/null                      # move backup GPT to the real end of the disk
+max=$(sgdisk -E "$D" 2>/dev/null | tail -1)    # last usable sector
+[ $((max - end)) -gt 524288 ] || { echo "persist already fills the disk"; exit 0; }
+echo "growing $P (partition $N of $D) to the end of the disk"
+sgdisk -d "$N" -n "$N:$start:0" -t "$N:8300" -c "$N:trackc-persist" -u "$N:$guid" "$D" >/dev/null
+partx -u --nr "$N" "$D"
+resize2fs "$P"

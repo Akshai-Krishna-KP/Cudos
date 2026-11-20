@@ -1,0 +1,11 @@
+[Unit]
+Description=Grow the persist partition to fill the USB stick (first boot)
+After=local-fs.target
+Before=trackc-bench.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/trackc-grow-persist
+
+[Install]
+WantedBy=multi-user.target

@@ -96,6 +96,27 @@ if [[ $VARIANT == dev ]]; then
   echo trackc-dev > "$R/etc/hostname"; sed -i 's/\ttrackc$/\ttrackc-dev/' "$R/etc/hosts"
 fi
 
+# --- 3b. portable variant: shareable image, no lab secrets (see overlay/rootfs-portable)
+if [[ $VARIANT == portable ]]; then
+  # Reuse the dev pieces that hold no secrets: cuda-dev, Wi-Fi units (used only if the
+  # owner provides trackc/wifi.txt on the stick), examples.
+  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$R/usr/local/bin/cuda-dev"
+  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/sbin/trackc-wifi-start" "$R/usr/local/sbin/"
+  install -m 644 "$SRC"/overlay/rootfs-dev/etc/systemd/system/trackc-wifi*.service "$R/etc/systemd/system/"
+  install -m 644 "$SRC/overlay/rootfs-dev/etc/systemd/network/25-trackc-wifi.network" "$R/etc/systemd/network/"
+  cp -a "$SRC/overlay/rootfs-portable/." "$R/"
+  ch useradd --create-home --shell /bin/bash gpu
+  sed -i '/^gpu:/d' "$R/etc/subuid" "$R/etc/subgid"
+  echo "gpu:200000:65536" >> "$R/etc/subuid"; echo "gpu:200000:65536" >> "$R/etc/subgid"
+  ln -sfn /var/lib/cuda-work/gpu "$R/home/gpu/cuda"; ch chown -h gpu:gpu /home/gpu/cuda
+  install -d "$R/usr/share/trackc/examples"
+  install -m 644 "$SRC"/benchmark/examples/* "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
+  rm -f "$R"/etc/ssh/ssh_host_*                      # no shared host keys in a shared image
+  ch systemctl disable ssh.service ssh.socket >/dev/null 2>&1 || true
+  ch systemctl enable systemd-networkd.service trackc-grow-persist.service trackc-provision.service >/dev/null
+  ch passwd -l root >/dev/null
+fi
+
 # --- 4. initramfs + cleanup
 ch update-initramfs -u -k "$KVER"
 rm -f "$R/etc/machine-id" && touch "$R/etc/machine-id"

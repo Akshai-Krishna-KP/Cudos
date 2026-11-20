@@ -1,0 +1,12 @@
+
+  Track C GPU appliance (read-only root, CUDA via rootless containers)
+
+  Write and run your own CUDA code:
+    cd ~/cuda                                   # persistent workspace
+    nano hello.cu                               # write a kernel (Ctrl-O save, Ctrl-X exit)
+    cuda-dev nvcc -arch=sm_89 -o vec examples/vector_add.cu
+    cuda-dev ./vec
+    cuda-dev                                    # shell with nvcc, cuBLAS, cuRAND, cuFFT
+
+  GPU status:      gpu-status  (live: gpu-watch, Ctrl-C quits)
+

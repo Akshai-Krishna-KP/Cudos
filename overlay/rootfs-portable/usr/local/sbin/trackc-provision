@@ -1,0 +1,29 @@
+#!/bin/sh
+# trackc-provision: optional network/SSH from files the owner puts on the stick's FAT
+# boot partition (readable from Windows/macOS/Linux) in the folder trackc/:
+#   trackc/authorized_keys  -> SSH enabled, key-only, for user gpu (port 22 opened)
+#   trackc/wifi.txt         -> Wi-Fi: two lines  SSID=...  PASSWORD=...
+# Nothing on the stick: no SSH, no Wi-Fi (wired Ethernet still gets DHCP).
+set -u
+E=/run/trackc/esp; mkdir -p "$E"
+mount -o ro,nodev,nosuid,noexec /dev/disk/by-partlabel/esp "$E" 2>/dev/null || exit 0
+if [ -s "$E/trackc/authorized_keys" ]; then
+  install -d -m 700 -o gpu -g gpu /home/gpu/.ssh
+  install -m 600 -o gpu -g gpu "$E/trackc/authorized_keys" /home/gpu/.ssh/authorized_keys
+  # Per-stick host keys, generated once and kept on the persist partition (never in the image).
+  K=/var/lib/trackc/ssh; install -d -m 700 "$K"
+  for t in ed25519 rsa; do [ -s "$K/ssh_host_${t}_key" ] || ssh-keygen -q -t "$t" -N '' -f "$K/ssh_host_${t}_key"; done
+  printf 'HostKey %s\nHostKey %s\n' "$K/ssh_host_ed25519_key" "$K/ssh_host_rsa_key" > /etc/ssh/sshd_config.d/05-hostkeys.conf
+  printf 'tcp dport 22 accept\n' > /etc/nftables.d/10-ssh.nft
+  systemctl reload-or-restart nftables.service
+  systemctl start ssh.service && echo "trackc-provision: SSH enabled (key-only, user gpu)"
+fi
+if [ -s "$E/trackc/wifi.txt" ]; then
+  ssid=$(sed -n 's/^SSID=//p' "$E/trackc/wifi.txt" | tr -d '\r'); pw=$(sed -n 's/^PASSWORD=//p' "$E/trackc/wifi.txt" | tr -d '\r')
+  if [ -n "$ssid" ] && [ -n "$pw" ]; then
+    { echo "ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev"; wpa_passphrase "$ssid" "$pw" | grep -v '#psk'; } > /etc/wpa_supplicant/trackc-wifi.conf
+    chmod 600 /etc/wpa_supplicant/trackc-wifi.conf
+    systemctl start trackc-wifi-start.service && echo "trackc-provision: Wi-Fi configured for $ssid"
+  fi
+fi
+umount "$E"

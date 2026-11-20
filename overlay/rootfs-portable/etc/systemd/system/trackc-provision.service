@@ -1,0 +1,11 @@
+[Unit]
+Description=Optional SSH key / Wi-Fi from files on the stick's boot partition
+After=local-fs.target nftables.service systemd-networkd.service
+Before=trackc-issue.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/trackc-provision
+
+[Install]
+WantedBy=multi-user.target

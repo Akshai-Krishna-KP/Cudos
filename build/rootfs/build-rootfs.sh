@@ -30,7 +30,9 @@ rm -rf "$OUT"; mkdir -p "$OUT" "$SRC/cache/mmdebstrap-debs"
 
 pkgs() { sed -e 's/#.*//' -e '/^\s*$/d' "$@" | awk '{print $1}' | paste -sd,; }
 PKGS=$(pkgs "$SRC/build/rootfs/packages.txt")
-[[ $VARIANT == dev ]] && PKGS="$PKGS,$(pkgs "$SRC/build/rootfs/packages-dev.txt")"
+[[ $VARIANT == dev || $VARIANT == portable ]] && PKGS="$PKGS,$(pkgs "$SRC/build/rootfs/packages-dev.txt")"
+# portable: shareable image (no lab secrets); grows its persist partition on first boot.
+[[ $VARIANT == portable ]] && PKGS="$PKGS,gdisk,e2fsprogs"
 if [[ $KERNEL == trackc ]]; then
   ls "$SRC"/out/kernel/linux-image-*-trackc_*.deb >/dev/null || { echo "build the kernel first (build/kernel/run.sh)" >&2; exit 1; }
   PKGS=$(echo "$PKGS" | tr , '\n' | grep -vx linux-image-amd64 | paste -sd,)

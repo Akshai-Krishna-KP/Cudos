@@ -1,0 +1,4 @@
+# DHCP replies for wired/Wi-Fi networking.
+udp dport 68 accept
+icmp type echo-request accept
+meta l4proto ipv6-icmp accept

@@ -12,6 +12,9 @@ mkdir -p "$O"
 source "$SRC/build/versions.env"
 : "${SOURCE_DATE_EPOCH:?}"
 ESP_MIB=256; PERSIST_MIB=512
+# portable: persist starts with the cuda-dev toolkit archive (grows to fill the stick at
+# first boot: trackc-grow-persist), so the flashed stick is complete without extra copies.
+[[ $VARIANT == portable ]] && PERSIST_MIB=2400
 
 KVER=$(ls "$R/lib/modules" | sort -V | tail -1)
 CMDLINE="root=PARTLABEL=trackc-root rootfstype=squashfs ro console=ttyS0,115200 console=tty0 quiet loglevel=3 modprobe.blacklist=nouveau systemd.gpt_auto=0 panic=10"
@@ -35,12 +38,22 @@ rm -f "$O/esp.img"
 mkfs.vfat -C -F 32 -n ESP -i 7C0FFEE0 --invariant "$O/esp.img" $((ESP_MIB * 1024)) >/dev/null
 mmd -i "$O/esp.img" ::/EFI ::/EFI/BOOT
 mcopy -i "$O/esp.img" -m "$O/trackc.efi" ::/EFI/BOOT/BOOTX64.EFI
+if [[ $VARIANT == portable ]]; then
+  mmd -i "$O/esp.img" ::/trackc
+  mcopy -i "$O/esp.img" -m "$SRC/overlay/esp-portable/README.txt" ::/README.txt
+fi
 
 # 4. persist image (ext4, fixed UUID + hash seed; E2FSPROGS_FAKE_TIME for timestamps).
 rm -f "$O/persist.img"
-E2FSPROGS_FAKE_TIME=$SOURCE_DATE_EPOCH mkfs.ext4 -q -L TRACKC_PERSIST \
+PD=$(mktemp -d)
+if [[ $VARIANT == portable ]]; then
+  mkdir -p "$PD/images"; cp "$SRC/out/trackc-cuda-dev.tar" "$PD/images/"
+  touch -d "@$SOURCE_DATE_EPOCH" "$PD/images" "$PD/images/trackc-cuda-dev.tar"
+fi
+E2FSPROGS_FAKE_TIME=$SOURCE_DATE_EPOCH mkfs.ext4 -q -L TRACKC_PERSIST -d "$PD" \
   -U 7c0ffee0-0000-4000-8000-000000000003 -E hash_seed=7c0ffee0-0000-4000-8000-0000000000aa,root_owner=0:0 \
   "$O/persist.img" "${PERSIST_MIB}M"
+rm -rf "$PD"
 
 # 5. GPT disk: sizes in 1 MiB units, 1 MiB alignment, fixed GUIDs.
 sq_mib=$(( ($(stat -c %s "$O/rootfs.squashfs") + 1048575) / 1048576 + 16 ))
@@ -63,3 +76,11 @@ ls -lh "$O/trackc.efi" "$O/rootfs.squashfs" "$O/disk.img"
   echo "uki_bytes=$(stat -c %s "$O/trackc.efi")"
   echo "bench_image_tar_bytes=$(stat -c %s "$R/usr/share/trackc/trackc-bench.tar")"
 } | tee "$O/sizes.txt"
+if [[ $VARIANT == portable ]]; then
+  # The deliverable: one flashable file (Rufus / balenaEtcher / dd) + checksum.
+  rm -f "$O/esp.img" "$O/persist.img"
+  mv "$O/disk.img" "$O/trackc-gpu-appliance.img"
+  zstd -q -T0 -19 --long=27 -f "$O/trackc-gpu-appliance.img" -o "$O/trackc-gpu-appliance.img.zst"
+  (cd "$O" && sha256sum trackc-gpu-appliance.img trackc-gpu-appliance.img.zst > SHA256SUMS)
+  ls -l "$O"
+fi
