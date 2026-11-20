@@ -4,7 +4,8 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/trackc-selftest
+# Also copy to the serial port so the QEMU smoke test (serial log) sees it; harmless without one.
+ExecStart=/bin/sh -c '/usr/local/sbin/trackc-selftest | tee /dev/ttyS0'
 StandardOutput=journal+console
 
 [Install]

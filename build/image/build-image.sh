@@ -24,9 +24,10 @@ ukify build \
   --output="$O/trackc.efi"
 
 # 2. squashfs root. /boot is excluded: kernel+initrd live in the UKI on the ESP.
+#    Timestamps come from SOURCE_DATE_EPOCH (mksquashfs reads it from the env).
 rm -f "$O/rootfs.squashfs"
 mksquashfs "$R" "$O/rootfs.squashfs" -noappend -comp zstd -Xcompression-level 19 -b 1M \
-  -reproducible -mkfs-time "$SOURCE_DATE_EPOCH" -all-time "$SOURCE_DATE_EPOCH" \
+  -reproducible \
   -wildcards -e 'boot/*' -quiet
 
 # 3. ESP image (FAT32, fixed volume id for reproducibility).
@@ -45,7 +46,7 @@ E2FSPROGS_FAKE_TIME=$SOURCE_DATE_EPOCH mkfs.ext4 -q -L TRACKC_PERSIST \
 sq_mib=$(( ($(stat -c %s "$O/rootfs.squashfs") + 1048575) / 1048576 + 16 ))
 total_mib=$(( 1 + ESP_MIB + sq_mib + PERSIST_MIB + 1 ))
 rm -f "$O/disk.img"; truncate -s "${total_mib}M" "$O/disk.img"
-sgdisk -q -o -U 7c0ffee0-0000-4000-8000-000000000000 \
+sgdisk -o -U 7c0ffee0-0000-4000-8000-000000000000 \
   -n "1:1M:+${ESP_MIB}M"     -t 1:ef00 -c 1:esp            -u 1:7c0ffee0-0000-4000-8000-000000000001 \
   -n "2:0:+${sq_mib}M"       -t 2:8300 -c 2:trackc-root    -u 2:7c0ffee0-0000-4000-8000-000000000002 \
   -n "3:0:+${PERSIST_MIB}M"  -t 3:8300 -c 3:trackc-persist -u 3:7c0ffee0-0000-4000-8000-000000000003 \

@@ -24,14 +24,22 @@ cp "$R/usr/bin/nvidia-smi" "$R/root/keep/nvidia-smi"
 # firmware-nvidia-gsp must stay although only the dkms package depends on it.
 ch apt-mark manual firmware-nvidia-gsp >/dev/null
 ch apt-mark auto nvidia-kernel-open-dkms nvidia-driver-cuda linux-headers-amd64 dkms >/dev/null
-DEBIAN_FRONTEND=noninteractive ch apt-get purge -y -q --autoremove nvidia-kernel-open-dkms nvidia-driver-cuda linux-headers-amd64 dkms >/dev/null
+# Purge everything that was only needed to compile the modules. RecommendsImportant=false:
+# otherwise apt keeps the compiler because some installed package merely recommends it.
+NOREC=(-o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false)
+BUILD_ONLY=$(ch dpkg-query -W -f '${Package}\n' | grep -E \
+  '^(gcc|g\+\+|cpp)(-[0-9]+)?(-x86-64-linux-gnu)?$|^linux-(headers|kbuild)-|^make$|^binutils|^lib(asan|tsan|ubsan|hwasan|lsan)[0-9]+$|^(libc6-dev|libc-dev-bin|linux-libc-dev|libcrypt-dev|patch)$|^lib(gcc|stdc\+\+)-[0-9]+-dev$' || true)
+echo "purging build-only packages:" $BUILD_ONLY
+DEBIAN_FRONTEND=noninteractive ch apt-get purge -y -q "${NOREC[@]}" --autoremove \
+  nvidia-kernel-open-dkms nvidia-driver-cuda linux-headers-amd64 dkms $BUILD_ONLY >/dev/null
+# gcc-14-base is a runtime dependency of libgcc-s1/libstdc++6 and may stay.
 mkdir -p "$R/lib/modules/$KVER/updates/nvidia"
 mv "$R"/root/keep/ko/* "$R/lib/modules/$KVER/updates/nvidia/"
 # nvidia-smi only needs libnvidia-ml.so.1 (kept); extracted binary is a non-dpkg component.
 install -m 755 "$R/root/keep/nvidia-smi" "$R/usr/bin/nvidia-smi"
 rm -rf "$R/root/keep" "$R/var/lib/dkms" "$R/usr/src/"nvidia-*
 ch depmod "$KVER"
-ch sh -c 'dpkg -l | grep -E "^ii +(gcc|g\+\+|make|dkms|linux-headers|cpp)" && exit 1 || true'
+ch sh -c 'dpkg -l | grep -E "^ii +(gcc|g\+\+|make|dkms|linux-headers|cpp)" | grep -v "gcc-14-base" && exit 1 || true'
 
 # --- 2. appliance
 cp -a "$SRC/overlay/rootfs/." "$R/"
@@ -41,7 +49,7 @@ echo "bench:100000:65536" > "$R/etc/subuid"; echo "bench:100000:65536" > "$R/etc
 mkdir -p "$R/usr/share/trackc"
 install -m 644 "$SRC/out/trackc-bench.tar" "$R/usr/share/trackc/trackc-bench.tar"
 ch systemctl enable gpu-autoconfig.service trackc-bench.service trackc-dashboard.service nftables.service >/dev/null
-ch systemctl disable trackc-selftest.service >/dev/null 2>&1 || true
+ch systemctl enable trackc-selftest.service >/dev/null   # boot-time check of read-only root + mount flags
 ch systemctl mask getty@tty1.service systemd-timesyncd.service apt-daily.timer apt-daily-upgrade.timer >/dev/null 2>&1 || true
 mkdir -p "$R/var/log/journal"
 # No apt metadata or NVIDIA repo config in the image (read-only appliance, no updates in place).
