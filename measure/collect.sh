@@ -88,6 +88,8 @@ ram)
   ;;
 bench)
   CMD=${BENCH_CMD:-/opt/trackc/trackc_bench}; RUNS=${BENCH_RUNS:-7}
+  # Custom image: pause the auto-start benchmark loop so it does not overlap the measured runs.
+  svc=0; systemctl is-active -q trackc-bench.service 2>/dev/null && { systemctl stop trackc-bench.service; svc=1; }
   # NVML telemetry every 200 ms for the whole series (temperature, power, clocks, throttling).
   nvidia-smi --query-gpu=timestamp,temperature.gpu,power.draw,clocks.sm,clocks.mem,pstate,clocks_event_reasons.active \
     --format=csv -lms 200 > "$OUT/bench-telemetry.csv" 2>&1 &
@@ -104,6 +106,7 @@ bench)
   kill $smi $sampler 2>/dev/null || true; wait 2>/dev/null || true
   { echo "# ram-load $(date -Is)"; echo "used_mib_peak=$(cat "$OUT/.ram-peak")"; } > "$OUT/ram-load.txt"
   rm -f "$OUT/.ram-peak"
+  (( svc )) && systemctl start trackc-bench.service
   ;;
 *) echo "unknown mode $MODE" >&2; exit 1 ;;
 esac

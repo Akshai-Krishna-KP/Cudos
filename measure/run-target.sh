@@ -42,6 +42,8 @@ find_host() {  # wait (max ~6 min) for the target to answer SSH; re-find by MAC 
 push_collector() {
   scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" \
     "$REPO/measure/collect.sh" "trackc@$HOST:/tmp/trackc-collect.sh"
+  scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile="$KH" -o HostKeyAlias="$NAME" \
+    "$REPO/measure/bench-appliance.sh" "trackc@$HOST:/tmp/trackc-bench-appliance.sh"
 }
 collect() { push_collector; t "sudo BENCH_CMD='$BENCH_CMD' BENCH_RUNS=$RUNS BENCH_START_MARKER='$MARKER' bash /tmp/trackc-collect.sh /var/lib/trackc/measure $*"; }
 
