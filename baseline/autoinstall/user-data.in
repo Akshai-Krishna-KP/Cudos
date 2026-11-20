@@ -59,8 +59,8 @@ autoinstall:
     - sh -c 'rm -f /target/boot/efi/EFI/BOOT/fbx64.efi'
     - sh -c 'curtin in-target --target=/target -- dpkg -l > /target/var/lib/trackc/baseline-dpkg-l.txt'
     - sh -c 'ls -la /target/boot/efi/EFI/*/ > /target/var/lib/trackc/esp-listing.txt'
-    # Do not leave the Wi-Fi password in the staging copy (live copy is in /etc/netplan, 0600).
-    - rm -f /target/root/trackc/60-trackc-wifi.yaml
+    # Do not leave the Wi-Fi password in the staging copy (live copy is /etc/wpa_supplicant/trackc-wifi.conf, 0600).
+    - rm -f /target/root/trackc/trackc-wifi.conf
     - sh -c 'curtin in-target --target=/target -- fstrim -v / > /dev/ttyS0 2>&1; true'
     - sh -c 'echo TRACKC-LATE-COMMANDS-DONE > /dev/ttyS0'
   shutdown: poweroff

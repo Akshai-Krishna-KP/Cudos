@@ -68,7 +68,7 @@ source "$CACHE/wifi.env"
 : "${WIFI_SSID:?set in cache/wifi.env}" "${WIFI_PASSWORD:?set in cache/wifi.env}"
 WIFI_ARGS=("$WIFI_SSID" "$WIFI_PASSWORD")
 [[ -n ${WIFI2_SSID:-} ]] && WIFI_ARGS+=("$WIFI2_SSID" "${WIFI2_PASSWORD:?}")
-python3 "$REPO/baseline/render-wifi-netplan.py" "${WIFI_ARGS[@]}" > "$WORK/stage/60-trackc-wifi.yaml"
+python3 "$REPO/baseline/render-wifi-conf.py" "${WIFI_ARGS[@]}" > "$WORK/stage/trackc-wifi.conf"
 tar -C "$WORK/stage" -cf "$WORK/http/stage.tar" .
 
 python3 -m http.server "$HTTP_PORT" --bind 127.0.0.1 --directory "$WORK/http" \

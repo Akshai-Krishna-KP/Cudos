@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# set-stick-wifi.sh: rewrite the lab hotspot config (/etc/netplan/60-trackc-wifi.yaml)
+# set-stick-wifi.sh: rewrite the lab hotspot config (/etc/wpa_supplicant/trackc-wifi.conf)
 # on the installed baseline stick, without mounting it or using sudo
 # (debugfs -w on the unmounted root partition; needs host/install-usb-access.sh).
-# Use when the phone hotspot changes. Reads cache/wifi.env (WIFI_*, optional WIFI2_*).
+# Use when the phone hotspot changes (the stick is plugged into Laptop 1).
+# On a running baseline, copy the rendered file over SSH instead. Reads cache/wifi.env (WIFI_*, optional WIFI2_*).
 # Usage: baseline/set-stick-wifi.sh 03018820042024224003
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,11 +20,12 @@ source "$REPO/cache/wifi.env"
 args=("${WIFI_SSID:?}" "${WIFI_PASSWORD:?}")
 [[ -n ${WIFI2_SSID:-} ]] && args+=("$WIFI2_SSID" "${WIFI2_PASSWORD:?}")
 tmp=$(mktemp); trap 'rm -f "$tmp"' EXIT
-python3 "$REPO/baseline/render-wifi-netplan.py" "${args[@]}" > "$tmp"
+python3 "$REPO/baseline/render-wifi-conf.py" "${args[@]}" > "$tmp"
 
-F=/etc/netplan/60-trackc-wifi.yaml
+F=/etc/wpa_supplicant/trackc-wifi.conf
 debugfs -w -f - "$PART" >/dev/null 2>&1 <<CMDS
 rm $F
+rm /etc/netplan/60-trackc-wifi.yaml
 write $tmp $F
 set_inode_field $F uid 0
 set_inode_field $F gid 0
@@ -31,5 +33,5 @@ set_inode_field $F mode 0100600
 CMDS
 # Verify: owner/mode and that every SSID is present (passwords are not printed).
 debugfs -R "stat $F" "$PART" 2>/dev/null | grep -E '^(Inode|User):'
-debugfs -R "cat $F" "$PART" 2>/dev/null | grep -F -c '{password:' | xargs echo "access points on stick:"
+debugfs -R "cat $F" "$PART" 2>/dev/null | grep -c '^network={' | xargs echo "access points on stick:"
 e2fsck -fn "$PART" >/dev/null && echo "filesystem clean"
