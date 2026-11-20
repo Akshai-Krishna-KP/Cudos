@@ -27,4 +27,19 @@ TRACKC-SELFTEST RESULT PASS
   Network: 127.0.1.1
   Log in, then:  cuda-dev (compile + run CUDA)  gpu-status  gpu-watch  gpu-bench
 
-trackc login: 
+trackc login: gpu (automatic login)
+
+Linux trackc 6.12.118-trackc #1 SMP PREEMPT_DYNAMIC @1794687828 x86_64
+
+  Track C GPU appliance (read-only root, CUDA via rootless containers)
+
+  Write and run your own CUDA code:
+    cd ~/cuda                                   # persistent workspace
+    nano hello.cu                               # write a kernel (Ctrl-O save, Ctrl-X exit)
+    cuda-dev nvcc -arch=sm_89 -o vec examples/vector_add.cu
+    cuda-dev ./vec
+    cuda-dev                                    # shell with nvcc, cuBLAS, cuRAND, cuFFT
+
+  GPU status:      gpu-status  (live: gpu-watch, Ctrl-C quits)
+
+[?2004hgpu@trackc:~$ 
