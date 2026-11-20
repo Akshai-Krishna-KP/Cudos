@@ -2,13 +2,13 @@
 <p class="eyebrow">OS LAB · TRACK C · CUDA / GPU COMPUTE</p>
 <div style="display:flex;flex-direction:column;gap:32px">
 <h1 class="rise" style="--i:0">A read-only Linux<br>GPU appliance</h1>
-<p class="lede rise" style="--i:1;max-width:1400px">Boots from a USB stick, loads the NVIDIA driver and starts a containerised CUDA benchmark with live GPU metrics. No login, no setup.</p>
+<p class="lede rise" style="--i:1;max-width:1400px">Boots from a USB stick, configures the NVIDIA GPU by itself, checks it with a CUDA benchmark, and lets you compile and run your own CUDA code.</p>
 </div>
 <div class="row" style="gap:16px">
-<p class="chip">Debian 13 minbase</p>
+<p class="chip">own 6.12 LTS kernel</p>
 <p class="chip">NVIDIA open modules 620.70.06</p>
 <p class="chip">rootless Podman + CDI</p>
-<p class="chip">squashfs root</p>
+<p class="chip">cuda-dev for your code</p>
 </div>
 <aside>Our Track C distro: a single-purpose GPU box. Everything I show was measured by scripts in the repo; nothing is typed in by hand.</aside>
 </section>

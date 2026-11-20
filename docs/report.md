@@ -184,7 +184,7 @@ it ran cooler (73 vs 83 °C). Stopping `nvidia-powerd` on the stock system repro
 
 ## 7. Reproducibility
 
-Two clean builds of the release image are **bit-for-bit identical** (squashfs, UKI, package list):
+Two clean builds of the final release image (our kernel) are **bit-for-bit identical** (squashfs, UKI, package list; the kernel .debs are an input and are themselves not yet bit-identical across kernel rebuilds):
 `docs/results/phase7/`. The last difference to remove was NVIDIA's build stamp (user@host, date) in
 `nvidia.ko`/`nvidia-modeset.ko`, now pinned to `SOURCE_DATE_EPOCH`.
 

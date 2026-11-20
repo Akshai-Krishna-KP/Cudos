@@ -1,4 +1,4 @@
-# image-size release  2026-11-20T16:28:44+05:30  git=8856a94
+# image-size release  2026-11-20T16:58:42+05:30  git=a3dabd9
 rootfs_uncompressed_MiB=1192.2
 squashfs_MiB=696.6
 uki_MiB=22.3   # kernel+initrd+cmdline on the ESP

@@ -3,10 +3,10 @@
 <h2>96% smaller on the stick, same CUDA functionality</h2>
 <div class="row">
 <div class="card rise" style="--i:0"><p class="k">STOCK UBUNTU + NVIDIA STACK</p><p class="big">18.6 GiB</p><p class="note">root filesystem used · 987 packages</p></div>
-<div class="card rise" style="--i:1"><p class="k">CUSTOM RELEASE IMAGE</p><p class="big">822 MiB</p><p class="note">squashfs 775 MiB + UKI 46 MiB · 171 packages</p></div>
-<div class="card rise" style="--i:2"><p class="k">REDUCTION</p><p class="big">96%</p><p class="note">target was 40%. Uncompressed rootfs: 1,276 MiB (93% less). Packages: 83% fewer.</p></div>
+<div class="card rise" style="--i:1"><p class="k">CUSTOM RELEASE IMAGE</p><p class="big">719 MiB</p><p class="note">squashfs 697 MiB + UKI 22 MiB · 170 packages</p></div>
+<div class="card rise" style="--i:2"><p class="k">REDUCTION</p><p class="big">96%</p><p class="note">target was 40%. Uncompressed rootfs: 1,192 MiB (94% less). Packages: 83% fewer.</p></div>
 </div>
-<p>Includes the preloaded CUDA benchmark container (466 MiB, mostly cuBLAS). The dev variant with SSH and Wi-Fi: 877 MiB, 203 packages.</p>
+<p>Includes the preloaded CUDA benchmark container (466 MiB, mostly cuBLAS). The dev variant with SSH, Wi-Fi and cuda-dev: 775 MiB, 203 packages.</p>
 <p class="footer">measure/image-size.sh, measure/final-table.py · docs/results/phase8/comparison.md</p>
 <aside>Stock carries the full CUDA toolkit (6.8 GiB), cuDNN (2.2 GiB), the X/GL/video driver stack and a compiler. We ship only what runs the benchmark: driver userspace on the host, cuBLAS runtime in the container.</aside>
 </section>

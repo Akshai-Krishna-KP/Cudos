@@ -4,7 +4,7 @@
 <div class="flow">
 <div class="step"><h3>Pinned inputs</h3><p>snapshot.debian.org date, NVIDIA driver 620.70.06, CTK 1.20.2, image digests, SOURCE_DATE_EPOCH</p></div>
 <div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
-<div class="step"><h3>mmdebstrap</h3><p>Debian 13 minbase in a rootless Podman builder container</p></div>
+<div class="step"><h3>kernel + rootfs</h3><p>our 6.12 LTS kernel; Debian 13 minbase via mmdebstrap, in rootless containers</p></div>
 <div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
 <div class="step"><h3>DKMS, then purge</h3><p>open GPU modules compiled for the image kernel; compilers + headers removed</p></div>
 <div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
