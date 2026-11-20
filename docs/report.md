@@ -70,10 +70,16 @@ normally set up a CUDA box.
 | Boot | Unified Kernel Image chainloaded from the stick's GRUB | one file to sign later (Secure Boot is off for now) |
 
 ### Variants
-* **release**: the graded image. No network services, no login users.
-* **dev**: release + lab remote access (key-only SSH, hotspot Wi-Fi, NOPASSWD sudo,
-  Wi-Fi firmware). Needed only because the target laptop is driven over SSH from
-  Laptop 1. Measured separately and accounted for in every comparison.
+* **release**: the graded, measured image (719 MiB). No network services, no login users;
+  boots, configures the GPU and runs the health check.
+* **portable**: the shareable deliverable, one flashable file
+  (`out/portable/trackc-gpu-appliance.img`, 3.6 GB; see `docs/portable-image.md`). Adds a
+  console user `gpu` (auto-login, no sudo), nano/vi, the `cuda-dev` toolkit preloaded on the
+  persist partition, wired DHCP, and optional Wi-Fi / SSH enabled only by files the owner
+  puts on the stick. No secrets or host keys inside; the persist partition grows to fill the
+  stick on first boot.
+* **dev**: portable features plus lab remote access for this project (hotspot Wi-Fi, our SSH
+  key, NOPASSWD sudo). Used on the 64 GB measurement stick; measured separately.
 
 ### Using it: your own CUDA code
 
