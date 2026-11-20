@@ -1,0 +1,20 @@
+<section id="build" class="dark">
+<p class="eyebrow">BUILD PIPELINE</p>
+<h2>Scripts in Git, pinned inputs, no host changes</h2>
+<div class="flow">
+<div class="step"><h3>Pinned inputs</h3><p>snapshot.debian.org date, NVIDIA driver 620.70.06, CTK 1.20.2, image digests, SOURCE_DATE_EPOCH</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step"><h3>mmdebstrap</h3><p>Debian 13 minbase in a rootless Podman builder container</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step"><h3>DKMS, then purge</h3><p>open GPU modules compiled for the image kernel; compilers + headers removed</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step"><h3>squashfs + UKI</h3><p>zstd -19 root, one EFI boot file</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step"><h3>To the stick</h3><p>over SSH, verified by SHA-256</p></div>
+</div>
+<div class="row">
+<div class="card"><p class="k">CONTAINER</p><p class="note">Benchmark image built offline from cached, signature-checked .debs. No 5 GB CUDA base image download.</p></div>
+<div class="card"><p class="k">TWO VARIANTS</p><p class="note"><b>release</b>: graded image, no network services. <b>dev</b>: + key-only SSH and Wi-Fi for remote testing, measured separately.</p></div>
+</div>
+<aside>Everything runs in containers on Laptop 1; the host OS was never modified apart from a udev rule for the two USB sticks.</aside>
+</section>

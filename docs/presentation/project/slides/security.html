@@ -1,0 +1,12 @@
+<section id="security">
+<p class="eyebrow">SECURITY HARDENING</p>
+<h2>Five concrete measures, checked at every boot</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+<div class="card"><p class="k">1 · READ-ONLY ROOT</p><p class="note">squashfs mounted ro, writes refused. /tmp, /var/tmp, /home: nodev, nosuid, noexec. A self-test checks each one at boot.</p></div>
+<div class="card"><p class="k">2 · UNPRIVILEGED WORKLOAD</p><p class="note">User “bench”, rootless Podman, --cap-drop=all, no-new-privileges, --network=none, non-root inside the container, default seccomp.</p></div>
+<div class="card"><p class="k">3 · KERNEL SYSCTLS</p><p class="note">kptr_restrict=2, dmesg_restrict, unprivileged BPF off, BPF JIT hardening, Yama ptrace_scope=2, kexec off, SysRq off.</p></div>
+<div class="card"><p class="k">4 · DEFAULT-DENY FIREWALL</p><p class="note">nftables input policy drop. Release image: nothing inbound. Dev image: SSH only.</p></div>
+<div class="card" style="grid-column:1 / 3"><p class="k">5 · MINIMAL ATTACK SURFACE</p><p class="note">No compiler, no package manager metadata, no SSH or login users in the release image. The host laptop’s internal disks are forced read-only.</p></div>
+</div>
+<aside>Not done: kernel lockdown plus module signing, dm-verity, AppArmor. The NVIDIA modules are unsigned, so Secure Boot must be off. That is the top next step.</aside>
+</section>

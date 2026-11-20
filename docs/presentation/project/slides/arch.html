@@ -1,0 +1,20 @@
+<section id="arch" class="dark">
+<p class="eyebrow">ARCHITECTURE</p>
+<h2>From power button to running CUDA in about 20 seconds of userspace</h2>
+<div class="flow">
+<div class="step rise" style="--i:0"><h3>UKI</h3><p>Debian 6.12 LTS kernel + initramfs + cmdline in one EFI file, chainloaded by GRUB</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step rise" style="--i:1"><h3>initramfs</h3><p>squashfs root read-only. /etc overlay on tmpfs, /var and /home overlays on persist ext4</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step rise" style="--i:2"><h3>gpu-autoconfig</h3><p>sysfs PCI scan → load open modules → device nodes → CDI spec</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step rise" style="--i:3"><h3>trackc-bench</h3><p>user “bench” → rootless Podman → CUDA container, GPU via CDI</p></div>
+<div class="arrow"><x-shape kind="arrow-right"></x-shape></div>
+<div class="step rise" style="--i:4"><h3>dashboard</h3><p>live NVML metrics + latest results on tty1</p></div>
+</div>
+<div class="row">
+<div class="card"><p class="k">ON THE HOST</p><p class="note">Driver userspace only: libcuda, NVML, GSP firmware, nvidia-smi, Container Toolkit, nvidia-powerd. No CUDA toolkit, no compiler.</p></div>
+<div class="card"><p class="k">IN THE CONTAINER</p><p class="note">Benchmark binary (cudart static) + cuBLAS runtime only. Built multi-stage; nvcc stays in the build stage.</p></div>
+</div>
+<aside>The host only drives the GPU. CUDA itself lives in the container. Persistence mode and Dynamic Boost are on, so the GPU behaves like on stock Ubuntu.</aside>
+</section>

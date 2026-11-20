@@ -1,0 +1,24 @@
+[2J[001;001H[=3h[2J[001;001H[2J[001;001H[8;042;160t[2J[001;001H[2J[001;001H[8;056;240t[2J[001;001HBdsDxe: loading Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+BdsDxe: starting Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+TRACKC-SELFTEST root-is-squashfs PASS
+TRACKC-SELFTEST root-mounted-ro PASS
+TRACKC-SELFTEST root-write-refused PASS
+TRACKC-SELFTEST etc-overlay PASS
+TRACKC-SELFTEST var-overlay PASS
+TRACKC-SELFTEST persist-mode PASS
+TRACKC-SELFTEST /tmp:nodev PASS
+TRACKC-SELFTEST /tmp:nosuid PASS
+TRACKC-SELFTEST /tmp:noexec PASS
+TRACKC-SELFTEST /var/tmp:nodev PASS
+TRACKC-SELFTEST /var/tmp:nosuid PASS
+TRACKC-SELFTEST /var/tmp:noexec PASS
+TRACKC-SELFTEST /home:nodev PASS
+TRACKC-SELFTEST /home:nosuid PASS
+TRACKC-SELFTEST /home:noexec PASS
+TRACKC-SELFTEST boot-count 1
+TRACKC-SELFTEST mounts:
+TRACKC-SELFTEST RESULT PASS
+[!p]104[?7h[6n[32766;32766H[6n[!p]104[?7h[6n[32766;32766H[6n
+Debian GNU/Linux 13 trackc-dev ttyS0
+
+trackc-dev login: 

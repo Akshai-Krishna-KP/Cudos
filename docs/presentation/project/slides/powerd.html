@@ -1,0 +1,12 @@
+<section id="powerd" class="dark with-footer">
+<p class="eyebrow">A FINDING ON THE WAY</p>
+<h2>The first custom build was 12% slower on the GPU. The OS wasn’t the cause.</h2>
+<div class="row">
+<div class="card rise" style="--i:0"><p class="k">STOCK, DYNAMIC BOOST ON</p><p class="big">228 GB/s</p><p class="note">nvidia-powerd running (Ubuntu default)</p></div>
+<div class="card rise" style="--i:1"><p class="k">STOCK, DYNAMIC BOOST OFF</p><p class="big">200 GB/s</p><p class="note">same laptop, same binary, service stopped</p></div>
+<div class="card rise" style="--i:2"><p class="k">FIRST CUSTOM BUILD</p><p class="big">200 GB/s</p><p class="note">no nvidia-powerd: GPU dropped to P3/P4 with “SW thermal slowdown”</p></div>
+</div>
+<p>Fix: ship NVIDIA’s 6 MB <span class="mono">nvidia-powerd</span> plus D-Bus. Proved by an A/B test on stock Ubuntu before changing our image.</p>
+<p class="footer">Raw data: docs/results/phase8/powerd-experiment-baseline.txt, custom-dev-laptop2-no-powerd/</p>
+<aside>NVML telemetry showed the custom image in lower P-states with thermal-slowdown flags even though it ran cooler. Stopping nvidia-powerd on stock Ubuntu reproduced exactly 200 GB/s. Lesson: "minimal" must not drop the power-management daemon on laptops.</aside>
+</section>

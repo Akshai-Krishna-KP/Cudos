@@ -1,0 +1,14 @@
+<section id="gpu" class="dark with-footer">
+<p class="eyebrow">RESULT · GPU PERFORMANCE</p>
+<h2>Same GPU speed, now inside a locked-down container</h2>
+<table>
+<tr><th style="width:40%">Benchmark (median of 7)</th><th style="width:20%">Stock, native</th><th style="width:20%">Custom, container</th><th>Change</th></tr>
+<tr><td>Memory copy bandwidth</td><td>228.4 GB/s</td><td>228.1 GB/s</td><td>−0.1%</td></tr>
+<tr><td>cuBLAS SGEMM, N = 4096</td><td>8.42 TFLOP/s</td><td>8.13 TFLOP/s</td><td>−3.5%</td></tr>
+<tr><td>Kernel launch + sync</td><td>4.37 µs</td><td>4.37 µs</td><td>0.0%</td></tr>
+<tr><td>Async launch</td><td>1.80 µs</td><td>1.80 µs</td><td>−0.2%</td></tr>
+</table>
+<p>SGEMM ranges overlap: stock 7.78 to 8.60, custom 7.60 to 8.32. The laptop GPU is power-capped (55 W) and reached 83 °C in both series.</p>
+<p class="footer">trackc_bench.cu (one source for both) · NVML telemetry every 200 ms · docs/results/phase1, phase8</p>
+<aside>The custom numbers come from the rootless container with all capabilities dropped and no network, so the isolation costs nothing measurable.</aside>
+</section>

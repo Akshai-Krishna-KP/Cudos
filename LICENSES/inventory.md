@@ -15,6 +15,7 @@ in the image). This file lists the groups and every **proprietary** item with it
 | NVIDIA Container Toolkit, libnvidia-container | 1.20.2 | Apache-2.0 | https://github.com/NVIDIA/nvidia-container-toolkit |
 | Podman, crun, conmon, netavark, uidmap | Debian trixie | Apache-2.0 / GPL-2+ / LGPL-2.1+ | Debian |
 | nftables | Debian trixie | GPL-2.0 | Debian |
+| D-Bus (system bus for nvidia-powerd, systemd) | 1.16.2 | GPL-2+ / AFL-2.1 | Debian |
 | Benchmark `benchmark/src/trackc_bench.cu`, all scripts in this repo | this repo | (project licence) | this repo |
 | Benchmark container base: Ubuntu 24.04 (`ubuntu@sha256:73b9...`) | 24.04 | per package, open source | https://hub.docker.com/_/ubuntu |
 | DEV image only: OpenSSH, wpa_supplicant, sudo, iproute2 | Debian trixie | BSD / BSD / ISC-style / GPL-2 | Debian |
@@ -27,6 +28,7 @@ in the image). This file lists the groups and every **proprietary** item with it
 | `libnvidia-ml1` (NVML) | 620.70.06 | rootfs | Live GPU metrics (temperature, power, clocks) and CDI generation. | as above |
 | `firmware-nvidia-gsp` (GSP firmware) | 620.70.06 | rootfs `/lib/firmware/nvidia` | Required by the open kernel modules on Ada GPUs: the GPU System Processor runs this firmware. | as above (firmware redistributable) |
 | `nvidia-smi` binary (extracted from `nvidia-driver-cuda`, not installed as a package) | 620.70.06 | rootfs `/usr/bin` | Standard tool for the demo and measurements; only the binary is kept to avoid ~20 unneeded libraries. Recorded here because it is a non-dpkg component. | as above |
+| `nvidia-powerd` (Dynamic Boost daemon) | 620.70.06 | rootfs | Without it the laptop GPU stays in lower P-states: ~12% less bandwidth (measured, `docs/results/phase8/powerd-experiment-baseline.txt`). | as above |
 | `nvidia-modprobe` | 620.70.06 | rootfs | Creates `/dev/nvidia*` nodes for unprivileged users. (Source is GPL-2.0 on GitHub; packaged by NVIDIA.) | open source |
 | cuBLAS (`libcublas.so.13`, `libcublasLt.so.13`) | CUDA 13.5 (13.10.0.20) | benchmark container only | SGEMM benchmark. | CUDA EULA Attachment A lists cuBLAS runtime libraries as redistributable with applications. |
 | CUDA runtime (`cudart`, statically linked into `trackc_bench`) | 13.5.37 | benchmark container | CUDA runtime API. | CUDA EULA Attachment A: redistributable. |

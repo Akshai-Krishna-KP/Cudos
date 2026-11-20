@@ -1,0 +1,14 @@
+<section id="licences">
+<p class="eyebrow">LICENCES</p>
+<h2>Open source except what CUDA cannot do without</h2>
+<table>
+<tr><th style="width:34%">Proprietary component</th><th style="width:22%">Where</th><th>Why it is needed</th></tr>
+<tr><td>libcuda + PTX JIT</td><td>rootfs</td><td>every CUDA call goes through it</td></tr>
+<tr><td>NVML (libnvidia-ml)</td><td>rootfs</td><td>live metrics, CDI generation</td></tr>
+<tr><td>GSP firmware</td><td>rootfs</td><td>required by the open modules on Ada</td></tr>
+<tr><td>nvidia-smi, nvidia-powerd</td><td>rootfs</td><td>metrics tool, Dynamic Boost</td></tr>
+<tr><td>cuBLAS, cudart</td><td>container</td><td>SGEMM; redistributable per CUDA EULA</td></tr>
+</table>
+<p>Open: Debian base, kernel, NVIDIA open GPU kernel modules (MIT/GPL-2.0), Container Toolkit (Apache-2.0), Podman, nftables. Full list: <span class="mono">LICENSES/inventory.md</span></p>
+<aside>All NVIDIA binaries ship unmodified from NVIDIA's apt repository. cuDNN and the full CUDA toolkit are deliberately not shipped.</aside>
+</section>

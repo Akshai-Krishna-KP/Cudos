@@ -1,0 +1,13 @@
+<section id="repro" class="with-footer">
+<p class="eyebrow">REPRODUCIBILITY</p>
+<h2>Two clean builds, bit-for-bit identical</h2>
+<table>
+<tr><th style="width:30%">Output</th><th style="width:45%">SHA-256 (build A = build B)</th><th>Result</th></tr>
+<tr><td>squashfs root</td><td class="mono">7ed03d4bc5988dc5…</td><td>identical</td></tr>
+<tr><td>UKI (kernel + initramfs)</td><td class="mono">ff849d60fc608c8b…</td><td>identical</td></tr>
+<tr><td>package list</td><td class="mono">1bf436332c22a5a9…</td><td>identical</td></tr>
+</table>
+<div class="card"><p class="k">THE LAST DIFFERENCE</p><p class="note">The first pair differed only in nvidia.ko and nvidia-modeset.ko: NVIDIA stamps user@host and the build date into them. Pinning NV_BUILD_USER, NV_BUILD_HOST and DATE to SOURCE_DATE_EPOCH fixed it.</p></div>
+<p class="footer">Same build machine, cached signature-checked .debs · docs/results/phase7/</p>
+<aside>Limit: both builds ran on Laptop 1 from the package cache, and the benchmark container archive was an input, not rebuilt.</aside>
+</section>
