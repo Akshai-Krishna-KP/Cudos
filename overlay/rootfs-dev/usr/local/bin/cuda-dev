@@ -8,22 +8,93 @@
 #   cuda-dev                         interactive shell with nvcc in ~/cuda
 #   cuda-dev nvcc -arch=sm_89 -o hello hello.cu
 #   cuda-dev ./hello
+#   cuda-dev list                    optional CUDA libraries, and which are installed
+#   cuda-dev install <name>...       add libraries (cudnn, cusolver, nccl, ...; needs internet)
+#   cuda-dev remove <name>...        remove added libraries
+#   cuda-dev reset                   back to the original toolkit (frees the space)
 #   cuda-dev --help
 set -eu
-IMG=localhost/trackc-cuda-dev:13.5
+BASE=localhost/trackc-cuda-dev:13.5
+USERIMG=localhost/trackc-cuda-dev-user:latest     # base + your added libraries (persist partition)
 TAR=/run/trackc/persist/images/trackc-cuda-dev.tar
 [ -r "$TAR" ] || TAR=/run/trackc/iso/images/trackc-cuda-dev.tar   # live ISO
+SHARE=${TRACKC_CUDA_SHARE:-/usr/share/trackc/cuda-dev}
 U=$(id -un); W=/var/lib/cuda-work/$U
-if [ "${1:-}" = -h ] || [ "${1:-}" = --help ]; then sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
-[ "$(id -u)" != 0 ] || { echo "cuda-dev: run it as a normal user (rootless), not as root" >&2; exit 1; }
-[ -d "$W" ] && [ -w "$W" ] || { echo "cuda-dev: workspace $W missing" >&2; exit 1; }
-[ -d "$W/examples" ] || cp -r /usr/share/trackc/examples "$W/examples"
-if ! podman image exists "$IMG" 2>/dev/null; then
-  [ -r "$TAR" ] || { echo "cuda-dev: CUDA toolkit image not installed ($TAR)." >&2
-                     echo "          From the build host run: build/container/install-cudadev.sh <ip>" >&2; exit 1; }
+P() { podman --log-level=error "$@"; }
+die() { echo "cuda-dev: $*" >&2; exit 1; }
+if [ "${1:-}" = -h ] || [ "${1:-}" = --help ]; then sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
+[ "$(id -u)" != 0 ] || die "run it as a normal user (rootless), not as root"
+
+ensure_base() {
+  P image exists "$BASE" 2>/dev/null && return 0
+  [ -r "$TAR" ] || die "CUDA toolkit image not installed ($TAR). From the build host: build/container/install-cudadev.sh <ip>"
   echo "cuda-dev: first use, loading the CUDA toolkit image (1-2 minutes)..." >&2
-  podman load -q -i "$TAR" >/dev/null
-fi
+  P load -q -i "$TAR" >/dev/null
+}
+current_img() { if P image exists "$USERIMG" 2>/dev/null; then echo "$USERIMG"; else echo "$BASE"; fi; }
+pkgs_of() { awk -v n="$1" '$1==n {sub(/^[^|]*\| */,""); print}' "$SHARE/libraries.txt"; }
+names() { grep -v '^#' "$SHARE/libraries.txt" | awk 'NF{print $1}'; }
+
+# Run apt inside a throw-away container made from the current image (its root is you, in a
+# user namespace; host network only for this download), then save the result as $USERIMG.
+apt_step() {   # apt_step "<shell commands>"
+  ensure_base; from=$(current_img); c=trackc-cuda-dev-apt-$$
+  P run --name "$c" --network=host -v "$SHARE:/trackc:ro" "$from" sh -ec "
+    export DEBIAN_FRONTEND=noninteractive
+    if [ ! -f /etc/apt/sources.list.d/cuda.list ]; then
+      echo '[cuda-dev] first install: preparing apt (Ubuntu archive, CA certificates, NVIDIA repository)'
+      apt-get -qq update
+      apt-get -y -qq -f install >/dev/null       # complete the offline-built toolkit's dependencies
+      apt-get -y -qq install --no-install-recommends ca-certificates >/dev/null
+      install -m 644 /trackc/cuda-archive-keyring.gpg /usr/share/keyrings/cuda-archive-keyring.gpg
+      echo 'deb [signed-by=/usr/share/keyrings/cuda-archive-keyring.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /' > /etc/apt/sources.list.d/cuda.list
+    fi
+    apt-get -qq update
+    $1
+    apt-get clean; rm -rf /var/lib/apt/lists/*
+  " || { P rm -f "$c" >/dev/null 2>&1; die "apt failed (no internet? see the messages above)"; }
+  P commit -q "$c" "$USERIMG" >/dev/null
+  P rm -f "$c" >/dev/null
+  P image prune -f >/dev/null 2>&1 || true
+}
+
+case "${1:-}" in
+  list)
+    ensure_base; img=$(current_img)
+    have=$(P run --rm --network=none "$img" dpkg-query -W -f '${Package}\n' 2>/dev/null)
+    echo "Optional CUDA 13.5 libraries (cuda-dev install <name>; needs internet):"
+    grep -v '^#' "$SHARE/libraries.txt" | awk 'NF' | while read -r n size rest; do
+      desc=${rest%%|*}; first=$(pkgs_of "$n" | awk '{print $1}'); first=${first%%=*}
+      mark="  "; echo "$have" | grep -qx "$first" && mark="* "
+      printf '  %s%-11s %6s  %s\n' "$mark" "$n" "$size" "$desc"
+    done
+    echo "  (* = installed. Always included: cuBLAS, cuRAND, cuFFT, NVRTC, nvJitLink, NVTX)"
+    exit 0 ;;
+  install|remove)
+    op=$1; shift; [ $# -gt 0 ] || die "usage: cuda-dev $op <name>...   (see: cuda-dev list)"
+    all=
+    for n in "$@"; do
+      p=$(pkgs_of "$n"); [ -n "$p" ] || die "unknown library '$n'. Available: $(names | tr '\n' ' ')"
+      all="$all $p"
+    done
+    if [ "$op" = install ]; then
+      echo "cuda-dev: installing $* from NVIDIA's signed CUDA repository..."
+      apt_step "apt-get -y -q install --no-install-recommends $all"
+    else
+      bare=$(for x in $all; do echo "${x%%=*}"; done | tr '\n' ' ')
+      apt_step "apt-get -y -q purge $bare && apt-get -y -q autoremove --purge"
+    fi
+    echo "cuda-dev: done. Your next 'cuda-dev ...' commands use the updated toolkit."
+    exit 0 ;;
+  reset)
+    if P image exists "$USERIMG" 2>/dev/null; then P rmi -f "$USERIMG" >/dev/null; P image prune -f >/dev/null 2>&1 || true; fi
+    echo "cuda-dev: back to the original CUDA 13.5 toolkit (added libraries removed)."
+    exit 0 ;;
+esac
+
+[ -d "$W" ] && [ -w "$W" ] || die "workspace $W missing"
+[ -d "$W/examples" ] || cp -r /usr/share/trackc/examples "$W/examples"
+ensure_base
 # Same sub-directory inside the container when called from within ~/cuda.
 rel=
 here=$(pwd -P)
@@ -35,4 +106,4 @@ esac
 tty=; [ -t 0 ] && [ -t 1 ] && tty=-it
 exec podman --log-level=error run --rm $tty --cgroups=disabled --network=none --cap-drop=all \
   --security-opt=no-new-privileges --userns=keep-id --device nvidia.com/gpu=all \
-  -v "$W:/work" -w "/work$rel" -e HOME=/work "$IMG" "$@"
+  -v "$W:/work" -w "/work$rel" -e HOME=/work "$(current_img)" "$@"

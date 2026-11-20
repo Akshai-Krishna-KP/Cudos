@@ -1,0 +1,14 @@
+# cuda-dev install <name>: optional CUDA 13.5 libraries from NVIDIA's signed apt repository
+# (ubuntu2404, the base of the cuda-dev container). Versions pinned to match CUDA 13.5.
+# name       approx-download  description | packages
+nvjpeg       6MB    JPEG decode/encode on the GPU | libnvjpeg-13-5=13.3.2.43-1 libnvjpeg-dev-13-5=13.3.2.43-1
+cupti        19MB   CUDA profiling tools interface | cuda-cupti-13-5=13.5.25-1 cuda-cupti-dev-13-5=13.5.25-1
+sanitizer    11MB   compute-sanitizer (memory/race checker) | cuda-sanitizer-13-5=13.5.25-1
+gdb          35MB   cuda-gdb debugger | cuda-gdb-13-5=13.5.25-1
+npp          250MB  NVIDIA Performance Primitives (image/signal) | libnpp-13-5=13.2.0.93-1 libnpp-dev-13-5=13.2.0.93-1
+cusolver     400MB  dense/sparse linear solvers | libcusolver-13-5=12.4.1.2-1 libcusolver-dev-13-5=12.4.1.2-1
+cusparse     630MB  sparse matrix routines | libcusparse-13-5=12.9.4.2-1 libcusparse-dev-13-5=12.9.4.2-1
+cusparselt   300MB  structured-sparsity matmul | libcusparselt0-cuda-13=0.10.0.12-1 libcusparselt0-dev-cuda-13=0.10.0.12-1
+nccl         375MB  multi-GPU collective communication | libnccl2=2.32.6-1+cuda13.5 libnccl-dev=2.32.6-1+cuda13.5
+cutensor     440MB  tensor contractions | libcutensor2-cuda-13=2.8.1.0-1 libcutensor2-dev-cuda-13=2.8.1.0-1
+cudnn        420MB  cuDNN 9 deep-learning primitives | libcudnn9-cuda-13=9.28.1.4-1 libcudnn9-dev-cuda-13=9.28.1.4-1 libcudnn9-headers-cuda-13=9.28.1.4-1

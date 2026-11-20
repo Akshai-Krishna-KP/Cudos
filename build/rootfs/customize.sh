@@ -80,6 +80,8 @@ if [[ $VARIANT == dev ]]; then
   sed -i '/^trackc:/d' "$R/etc/subuid" "$R/etc/subgid"
   echo "trackc:200000:65536" >> "$R/etc/subuid"; echo "trackc:200000:65536" >> "$R/etc/subgid"
   ln -sfn /var/lib/cuda-work/trackc "$R/home/trackc/cuda"; ch chown -h trackc:trackc /home/trackc/cuda
+  # cuda-dev install: library list + NVIDIA ubuntu2404 repo key (pinned, build/nvidia/fetch-keyring.sh)
+  install -m 644 "$SRC/cache/nvidia-ubuntu2404/cuda-archive-keyring.gpg" "$R/usr/share/trackc/cuda-dev/cuda-archive-keyring.gpg"
   install -d "$R/usr/share/trackc/examples"
   install -m 644 "$SRC"/benchmark/examples/* "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
   # Console fallback login (same generated password as the baseline, from cache/).
@@ -102,6 +104,9 @@ if [[ $VARIANT == portable ]]; then
   # Reuse the dev pieces that hold no secrets: cuda-dev, Wi-Fi units (used only if the
   # owner provides trackc/wifi.txt on the stick), examples.
   install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$R/usr/local/bin/cuda-dev"
+  install -d "$R/usr/share/trackc/cuda-dev"
+  install -m 644 "$SRC/overlay/rootfs-dev/usr/share/trackc/cuda-dev/libraries.txt" "$R/usr/share/trackc/cuda-dev/"
+  install -m 644 "$SRC/cache/nvidia-ubuntu2404/cuda-archive-keyring.gpg" "$R/usr/share/trackc/cuda-dev/"
   install -m 755 "$SRC/overlay/rootfs-dev/usr/local/sbin/trackc-wifi-start" "$R/usr/local/sbin/"
   install -m 644 "$SRC"/overlay/rootfs-dev/etc/systemd/system/trackc-wifi*.service "$R/etc/systemd/system/"
   install -m 644 "$SRC/overlay/rootfs-dev/etc/systemd/network/25-trackc-wifi.network" "$R/etc/systemd/network/"
