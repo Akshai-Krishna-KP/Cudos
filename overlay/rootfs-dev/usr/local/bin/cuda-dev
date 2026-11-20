@@ -25,8 +25,9 @@ if ! podman image exists "$IMG" 2>/dev/null; then
 fi
 # Same sub-directory inside the container when called from within ~/cuda.
 rel=
-case "$PWD/" in
-  "$W"/*) rel=${PWD#"$W"} ;;
+here=$(pwd -P)
+case "$here/" in
+  "$W"/*) rel=${here#"$W"} ;;
   *) [ $# -eq 0 ] || echo "cuda-dev: note: only ~/cuda is visible inside; running in ~/cuda" >&2 ;;
 esac
 [ $# -gt 0 ] || set -- bash

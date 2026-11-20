@@ -1,0 +1,23 @@
+# 2026-11-20T09:52:15+00:00 Laptop 2, appliance dev image, user trackc, cuda-dev
+$ cuda-dev ./matmul 2048
+Matrix multiply C = A x B, 2048 x 2048 floats (17.2 GFLOP)
+
+CPU (1 core)                     2458.5 ms       7.0 GFLOP/s
+GPU tiled CUDA kernel             18.58 ms     924.7 GFLOP/s      132x faster
+GPU cuBLAS SGEMM                   2.41 ms    7124.1 GFLOP/s     1019x faster
+
+max |difference| vs CPU: kernel 8.58e-06, cuBLAS 8.58e-06  -> results agree
+
+$ cuda-dev ./pi 1000000000
+Monte Carlo pi with 1000000000 random points
+
+CPU        pi = 3.141417 (error 1.8e-04)      13365.6 ms for 1000000000 points (measured on 50000000)
+GPU        pi = 3.141565 (error 2.8e-05)         10.2 ms for 1000341504 points
+
+GPU is 1311x faster (98.1 billion points/s)
+
+$ cuda-dev ./vector_add
+device: NVIDIA GeForce RTX 4060 Laptop GPU  sm_89  SMs=24  mem=7.7 GiB
+cuda driver API 13050, runtime 13050
+vector_add: PASS (16777216 elements)
+
