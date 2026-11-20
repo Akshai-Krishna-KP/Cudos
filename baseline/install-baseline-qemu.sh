@@ -66,20 +66,9 @@ cp "$HOME/.ssh/trackc_ed25519.pub" "$WORK/stage/authorized_keys"
 # shellcheck source=/dev/null
 source "$CACHE/wifi.env"
 : "${WIFI_SSID:?set in cache/wifi.env}" "${WIFI_PASSWORD:?set in cache/wifi.env}"
-python3 - "$WIFI_SSID" "$WIFI_PASSWORD" > "$WORK/stage/60-trackc-wifi.yaml" <<'PY'
-import json, sys
-ssid, pw = sys.argv[1], sys.argv[2]
-# JSON strings are valid YAML scalars, so quoting is always safe.
-print(f'''network:
-  version: 2
-  wifis:
-    wlan:
-      match: {{name: "wl*"}}
-      dhcp4: true
-      optional: true
-      access-points:
-        {json.dumps(ssid)}: {{password: {json.dumps(pw)}}}''')
-PY
+WIFI_ARGS=("$WIFI_SSID" "$WIFI_PASSWORD")
+[[ -n ${WIFI2_SSID:-} ]] && WIFI_ARGS+=("$WIFI2_SSID" "${WIFI2_PASSWORD:?}")
+python3 "$REPO/baseline/render-wifi-netplan.py" "${WIFI_ARGS[@]}" > "$WORK/stage/60-trackc-wifi.yaml"
 tar -C "$WORK/stage" -cf "$WORK/http/stage.tar" .
 
 python3 -m http.server "$HTTP_PORT" --bind 127.0.0.1 --directory "$WORK/http" \
