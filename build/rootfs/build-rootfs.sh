@@ -18,6 +18,7 @@
 set -euo pipefail
 SRC=/src
 VARIANT=${1:-release}
+KERNEL=${2:-debian}   # debian = Debian linux-image-amd64; trackc = our kernel (build/kernel, out/kernel/*.deb)
 source "$SRC/build/versions.env"
 OUT="$SRC/out/rootfs-$VARIANT"
 KEYRING=/usr/share/keyrings/cuda-archive-keyring.gpg
@@ -30,13 +31,18 @@ rm -rf "$OUT"; mkdir -p "$OUT" "$SRC/cache/mmdebstrap-debs"
 pkgs() { sed -e 's/#.*//' -e '/^\s*$/d' "$@" | awk '{print $1}' | paste -sd,; }
 PKGS=$(pkgs "$SRC/build/rootfs/packages.txt")
 [[ $VARIANT == dev ]] && PKGS="$PKGS,$(pkgs "$SRC/build/rootfs/packages-dev.txt")"
+if [[ $KERNEL == trackc ]]; then
+  ls "$SRC"/out/kernel/linux-image-*-trackc_*.deb >/dev/null || { echo "build the kernel first (build/kernel/run.sh)" >&2; exit 1; }
+  PKGS=$(echo "$PKGS" | tr , '\n' | grep -vx linux-image-amd64 | paste -sd,)
+fi
 V=$NVIDIA_DEB_VERSION; C=$NVIDIA_CTK_DEB_VERSION
 # NVIDIA userspace kept in the image: CUDA driver lib, NVML, GSP firmware, CTK (CDI).
 # nvidia-powerd = Dynamic Boost: without it the laptop GPU runs ~12% slower (docs/results/phase8/powerd-experiment-baseline.txt).
 NV_KEEP="libcuda1=$V,libnvidia-ml1=$V,firmware-nvidia-gsp=$V,nvidia-modprobe=$V,nvidia-powerd=$V"
 NV_KEEP="$NV_KEEP,nvidia-container-toolkit=$C,nvidia-container-toolkit-base=$C,libnvidia-container-tools=$C,libnvidia-container1=$C"
 # Build-only: compiled/extracted, then purged (modules + nvidia-smi binary are kept).
-NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,linux-headers-amd64,dkms"
+NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,dkms"
+[[ $KERNEL == debian ]] && NV_BUILD="$NV_BUILD,linux-headers-amd64"
 
 mmdebstrap \
   --variant=minbase \
@@ -55,7 +61,7 @@ mmdebstrap \
   --setup-hook='mkdir -p "$1/var/cache/apt/archives/"' \
   --setup-hook='sync-in '"$SRC"'/cache/mmdebstrap-debs /var/cache/apt/archives/' \
   --customize-hook='sync-out /var/cache/apt/archives '"$SRC"'/cache/mmdebstrap-debs' \
-  --customize-hook="$SRC/build/rootfs/customize.sh \"\$1\" $VARIANT" \
+  --customize-hook="$SRC/build/rootfs/customize.sh \"\$1\" $VARIANT $KERNEL" \
   "$DEBIAN_SUITE" "$OUT" \
   "deb http://snapshot.debian.org/archive/debian/$DEBIAN_SNAPSHOT $DEBIAN_SUITE main non-free-firmware" \
   "deb http://snapshot.debian.org/archive/debian/$DEBIAN_SNAPSHOT $DEBIAN_SUITE-updates main non-free-firmware" \

@@ -15,7 +15,7 @@ deb=$(ls "$SRC"/cache/mmdebstrap-debs/linux-image-6.12.*+deb13-amd64_*.deb | hea
 dpkg-deb --fsys-tarfile "$deb" | tar -xO --wildcards './boot/config-*' > .config
 cat "$SRC"/build/kernel/lsmod-*.txt | sort -u | awk '{print $1, 0, 0}' > /tmp/lsmod
 make -s olddefconfig
-yes '' | make -s LSMOD=/tmp/lsmod localmodconfig >/dev/null 2>&1
+(yes '' || true) | make -s LSMOD=/tmp/lsmod localmodconfig >/dev/null 2>&1
 scripts/kconfig/merge_config.sh -m -O . .config "$SRC/build/kernel/trackc.config" >/dev/null
 make -s olddefconfig
 echo "modules enabled: $(grep -c '=m$' .config)   built-in: $(grep -c '=y$' .config)"

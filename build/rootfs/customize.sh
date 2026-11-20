@@ -6,9 +6,15 @@
 #   3. DEV variant: lab remote access.
 #   4. initramfs, cleanup.
 set -euo pipefail
-R=$1; VARIANT=$2; SRC=/src
+R=$1; VARIANT=$2; KERNEL=${3:-debian}; SRC=/src
 source "$SRC/build/versions.env"
 ch() { chroot "$R" "$@"; }
+if [[ $KERNEL == trackc ]]; then
+  # Our Phase 3 kernel: image + headers (headers only for the DKMS build, purged below).
+  cp "$SRC"/out/kernel/linux-image-*-trackc_*.deb "$SRC"/out/kernel/linux-headers-*-trackc_*.deb "$R/tmp/"
+  DEBIAN_FRONTEND=noninteractive ch sh -c 'dpkg -i /tmp/linux-headers-*.deb /tmp/linux-image-*.deb' >/dev/null
+  rm -f "$R"/tmp/linux-*.deb
+fi
 KVER=$(ls "$R/lib/modules" | sort -V | tail -1)
 NVV=${NVIDIA_DEB_VERSION%-*}
 echo "customize: kernel $KVER, nvidia $NVV, variant $VARIANT"
