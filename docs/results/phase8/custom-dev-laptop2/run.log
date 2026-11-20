@@ -1,0 +1,22 @@
+[14:18:38] == custom-dev-laptop2: 5 boots, 7 bench runs, host 10.131.79.89
+[14:18:40] boot 1/5: rebooting
+[14:19:32] target moved to 10.131.79.92
+[14:19:39] boot 1: Startup finished in 15.851s (firmware) + 4.716s (loader) + 4.189s (kernel) + 12.924s (userspace) = 37.681s 
+[14:19:39] boot 2/5: rebooting
+[14:21:03] == custom-dev-laptop2: 5 boots, 7 bench runs, host 10.131.79.92
+[14:21:07] boot 1/5: rebooting
+[14:22:56] boot 1: Startup finished in 15.522s (firmware) + 4.743s (loader) + 4.124s (kernel) + 13.730s (userspace) = 38.120s 
+[14:22:56] boot 2/5: rebooting
+[14:23:54] boot 2: Startup finished in 15.543s (firmware) + 4.751s (loader) + 3.600s (kernel) + 14.219s (userspace) = 38.116s 
+[14:23:54] boot 3/5: rebooting
+[14:24:43] boot 3: Startup finished in 15.590s (firmware) + 4.767s (loader) + 3.631s (kernel) + 14.219s (userspace) = 38.209s 
+[14:24:43] boot 4/5: rebooting
+[14:25:37] boot 4: Startup finished in 15.531s (firmware) + 4.744s (loader) + 3.593s (kernel) + 13.493s (userspace) = 37.362s 
+[14:25:37] boot 5/5: rebooting
+[14:26:32] boot 5: Startup finished in 16.762s (firmware) + 4.740s (loader) + 3.625s (kernel) + 14.477s (userspace) = 39.605s 
+[14:26:32] idling 275 s before RAM measurement
+[14:31:09] ram idle done
+[14:31:11] static done
+[14:31:11] benchmark: 7 runs
+[14:31:57] bench done
+[14:31:58] raw results in /home/krishna/OS/docs/results/phase8/custom-dev-laptop2/raw

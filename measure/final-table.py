@@ -30,7 +30,10 @@ def med(xs):
 
 
 def red(a, b):
-    return f"{(1 - b / a) * 100:.0f}% less" if a and b is not None else "n/a"
+    if not a or b is None:
+        return "n/a"
+    r = (1 - b / a) * 100
+    return "same (within 1%)" if abs(r) < 1 else (f"{r:.0f}% less" if r > 0 else f"{-r:.0f}% more")
 
 
 def f(x, nd=1):

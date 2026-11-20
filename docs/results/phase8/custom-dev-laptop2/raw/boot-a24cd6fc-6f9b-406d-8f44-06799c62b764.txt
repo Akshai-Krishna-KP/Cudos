@@ -1,0 +1,55 @@
+# boot 2026-11-20T08:56:30+00:00 boot_id=a24cd6fc-6f9b-406d-8f44-06799c62b764
+$ systemd-analyze
+Startup finished in 16.762s (firmware) + 4.740s (loader) + 3.625s (kernel) + 14.477s (userspace) = 39.605s 
+graphical.target reached after 14.477s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @14.477s
+└─multi-user.target @14.477s
+  └─ssh.service @12.842s +1.552s
+    └─network.target @12.836s
+      └─wpa_supplicant.service @9.021s +3.814s
+        └─dbus.service @7.255s +1.763s
+          └─basic.target @7.253s
+            └─systemd-pcrphase-sysinit.service @7.203s +49ms
+              └─sysinit.target @7.188s
+                └─systemd-backlight@backlight:nvidia_0.service @14.382s +12ms
+                  └─system-systemd\x2dbacklight.slice @4.000s
+                    └─system.slice @847ms
+                      └─-.slice @847ms
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+7.106s nvidia-cdi-refresh.service
+7.075s gpu-autoconfig.service
+5.186s systemd-logind.service
+5.169s trackc-selftest.service
+3.814s wpa_supplicant.service
+3.692s systemd-journal-flush.service
+3.563s systemd-networkd.service
+3.238s dev-disk-by\x2dlabel-TRACKC_PERSIST.device
+3.231s dev-sda3.device
+1.763s dbus.service
+1.705s nftables.service
+1.552s ssh.service
+1.537s systemd-tmpfiles-setup.service
+ 552ms systemd-tmpfiles-setup-dev-early.service
+ 537ms dev-hugepages.mount
+ 536ms dev-mqueue.mount
+ 535ms run-lock.mount
+ 535ms sys-kernel-debug.mount
+ 534ms sys-kernel-tracing.mount
+ 496ms systemd-remount-fs.service
+ 492ms sys-fs-fuse-connections.mount
+ 473ms trackc-wifi-start.service
+ 432ms systemd-udevd.service
+ 375ms systemd-journald.service
+ 367ms systemd-udev-trigger.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    0.680069] Run /init as init process
+[    3.990000] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+
+time_to_benchmark_s=20
