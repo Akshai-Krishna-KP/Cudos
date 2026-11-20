@@ -1,0 +1,53 @@
+# boot 2026-11-20T08:21:44+00:00 boot_id=c42111e7-7103-4f7d-a75c-8e0da2edd36d
+$ systemd-analyze
+Startup finished in 15.585s (firmware) + 4.816s (loader) + 4.238s (kernel) + 14.185s (userspace) = 38.825s 
+graphical.target reached after 14.184s in userspace.
+
+$ systemd-analyze critical-chain --no-pager
+The time when unit became active or started is printed after the "@" character.
+The time the unit took to start is printed after the "+" character.
+
+graphical.target @14.184s
+└─multi-user.target @14.184s
+  └─trackc-dashboard.service @13.336s
+    └─gpu-autoconfig.service @7.950s +5.384s
+      └─basic.target @7.912s
+        └─systemd-pcrphase-sysinit.service @7.860s +51ms
+          └─sysinit.target @7.720s
+            └─systemd-backlight@backlight:nvidia_0.service @14.027s +15ms
+              └─system-systemd\x2dbacklight.slice @4.362s
+                └─system.slice @1.093s
+                  └─-.slice @1.093s
+
+$ sh -c systemd-analyze blame --no-pager | head -25
+6.161s nvidia-cdi-refresh.service
+5.384s gpu-autoconfig.service
+4.346s ssh.service
+4.306s trackc-selftest.service
+3.928s systemd-networkd.service
+3.875s dev-disk-by\x2dlabel-TRACKC_PERSIST.device
+3.864s dev-sda3.device
+3.734s systemd-journal-flush.service
+1.497s nftables.service
+1.109s systemd-tmpfiles-setup.service
+ 786ms ldconfig.service
+ 673ms dev-hugepages.mount
+ 672ms dev-mqueue.mount
+ 671ms run-lock.mount
+ 670ms sys-kernel-debug.mount
+ 669ms sys-kernel-tracing.mount
+ 633ms systemd-remount-fs.service
+ 627ms sys-fs-fuse-connections.mount
+ 592ms systemd-tmpfiles-setup-dev-early.service
+ 522ms systemd-udevd.service
+ 478ms sys-kernel-config.mount
+ 436ms systemd-udev-trigger.service
+ 414ms systemd-backlight@leds:platform::kbd_backlight.service
+ 353ms systemd-journald.service
+ 343ms systemd-sysctl.service
+
+$ kernel timestamp of first userspace (dmesg 'Run /init' / 'systemd')
+[    0.697387] Run /init as init process
+[    4.665738] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+
+time_to_benchmark_s=20

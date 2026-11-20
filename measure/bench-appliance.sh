@@ -4,5 +4,6 @@
 # Called by collect.sh (BENCH_CMD="bash /tmp/trackc-bench-appliance.sh"), args passed through.
 set -euo pipefail
 install -d -o bench -g bench -m 700 /run/trackc-bench
+cd /   # runuser keeps the cwd; the caller's home is not readable by 'bench'
 exec runuser -u bench -- env HOME=/var/lib/trackc-bench XDG_RUNTIME_DIR=/run/trackc-bench \
-  /usr/local/sbin/trackc-bench-run once "$@" 2> >(grep -v 'pause process' >&2)
+  /usr/local/sbin/trackc-bench-run once "$@"

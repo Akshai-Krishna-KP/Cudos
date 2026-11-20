@@ -1,0 +1,19 @@
+[13:39:54] == custom-dev-laptop2: 5 boots, 7 bench runs, host 10.131.79.89
+[13:39:56] boot 1/5: rebooting
+[13:41:45] target moved to 10.131.79.91
+[13:47:23] target not reachable
+[13:48:05] == custom-dev-laptop2: 5 boots, 7 bench runs, host 10.131.79.91
+[13:48:07] boot 1/5: rebooting
+[13:49:03] boot 1: 
+[13:49:03] boot 2/5: rebooting
+[13:49:55] boot 2: 
+[13:49:55] boot 3/5: rebooting
+[13:50:48] boot 3: 
+[13:50:48] boot 4/5: rebooting
+[13:51:47] boot 4: 
+[13:51:47] boot 5/5: rebooting
+[13:52:41] boot 5: 
+[13:52:41] idling 272 s before RAM measurement
+[13:57:16] ram idle done
+[13:57:22] static done
+[13:57:22] benchmark: 7 runs

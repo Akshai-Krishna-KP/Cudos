@@ -1,0 +1,8 @@
+# image-size dev  2026-11-20T13:40:20+05:30  git=0b44fdd
+rootfs_uncompressed_MiB=1420.7
+squashfs_MiB=829.6
+uki_MiB=46.4   # kernel+initrd+cmdline on the ESP
+medium_total_MiB=875.9   # UKI + squashfs (container archive included)
+bench_container_archive_MiB=466.0   # inside the squashfs
+dpkg_packages=196
+non_dpkg_components=nvidia open kernel modules (5 .ko), nvidia-smi binary, trackc-bench OCI archive

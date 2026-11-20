@@ -1,0 +1,8 @@
+-- with nvidia-powerd (active)
+"bandwidth_gbs":228.97 "sgemm_tflops":8.153 
+"bandwidth_gbs":228.33 "sgemm_tflops":7.882 
+"bandwidth_gbs":228.49 "sgemm_tflops":7.714 
+-- without nvidia-powerd (inactive)
+"bandwidth_gbs":199.99 "sgemm_tflops":7.381 
+"bandwidth_gbs":199.99 "sgemm_tflops":7.477 
+"bandwidth_gbs":200.06 "sgemm_tflops":7.426 

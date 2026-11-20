@@ -1,0 +1,119 @@
+# static 2026-11-20T08:27:21+00:00
+$ cat /etc/os-release
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+NAME="Debian GNU/Linux"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+DEBIAN_VERSION_FULL=13.7
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+
+$ uname -a
+Linux trackc-dev 6.12.117+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.117-1 (2026-11-12) x86_64 GNU/Linux
+
+packages_dpkg=196
+rootfs_used_bytes=1482753180
+
+$ df -B1 -x tmpfs -x devtmpfs -x squashfs -x overlay
+Filesystem                          1B-blocks      Used   Available Use% Mounted on
+/dev/disk/by-label/TRACKC_PERSIST 13944868864 724045824 12490125312   6% /run/trackc/persist
+efivarfs                               151464    127030       19314  87% /sys/firmware/efi/efivars
+
+$ df -B1 -t squashfs -t overlay
+Filesystem       1B-blocks      Used   Available Use% Mounted on
+/dev/sda3        870318080 870318080           0 100% /
+overlay        12436144128     20480 12436123648   1% /etc
+overlay        13944868864 724045824 12490125312   6% /var
+overlay        13944868864 724045824 12490125312   6% /home
+
+$ findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS
+TARGET                                          SOURCE                            FSTYPE     OPTIONS
+/                                               /dev/sda3                         squashfs   ro,relatime,errors=continue
+|-/sys                                          sysfs                             sysfs      rw,nosuid,nodev,noexec,relatime
+| |-/sys/kernel/security                        securityfs                        securityfs rw,nosuid,nodev,noexec,relatime
+| |-/sys/fs/cgroup                              cgroup2                           cgroup2    rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot
+| |-/sys/fs/pstore                              pstore                            pstore     rw,nosuid,nodev,noexec,relatime
+| |-/sys/firmware/efi/efivars                   efivarfs                          efivarfs   rw,nosuid,nodev,noexec,relatime
+| |-/sys/fs/bpf                                 bpf                               bpf        rw,nosuid,nodev,noexec,relatime,mode=700
+| |-/sys/fs/fuse/connections                    fusectl                           fusectl    rw,nosuid,nodev,noexec,relatime
+| |-/sys/kernel/tracing                         tracefs                           tracefs    rw,nosuid,nodev,noexec,relatime
+| |-/sys/kernel/debug                           debugfs                           debugfs    rw,nosuid,nodev,noexec,relatime
+| `-/sys/kernel/config                          configfs                          configfs   rw,nosuid,nodev,noexec,relatime
+|-/proc                                         proc                              proc       rw,nosuid,nodev,noexec,relatime
+| `-/proc/sys/fs/binfmt_misc                    systemd-1                         autofs     rw,relatime,fd=41,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=10273
+|-/dev                                          udev                              devtmpfs   rw,nosuid,relatime,size=12085116k,nr_inodes=3021279,mode=755,inode64
+| |-/dev/pts                                    devpts                            devpts     rw,nosuid,noexec,relatime,gid=5,mode=600,ptmxmode=000
+| |-/dev/shm                                    tmpfs                             tmpfs      rw,nosuid,nodev,inode64
+| |-/dev/hugepages                              hugetlbfs                         hugetlbfs  rw,nosuid,nodev,relatime,pagesize=2M
+| `-/dev/mqueue                                 mqueue                            mqueue     rw,nosuid,nodev,noexec,relatime
+|-/run                                          tmpfs                             tmpfs      rw,nosuid,nodev,noexec,relatime,size=2428936k,mode=755,inode64
+| |-/run/trackc/volatile                        tmpfs                             tmpfs      rw,nosuid,nodev,relatime,mode=755,inode64
+| |-/run/trackc/persist                         /dev/disk/by-label/TRACKC_PERSIST ext4       rw,nosuid,nodev,noatime
+| |-/run/credentials/systemd-journald.service   tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/credentials/getty@tty2.service         tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/credentials/getty@tty4.service         tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/lock                                   tmpfs                             tmpfs      rw,nosuid,nodev,noexec,relatime,size=5120k,inode64
+| |-/run/credentials/getty@tty6.service         tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/credentials/systemd-networkd.service   tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/credentials/getty@tty3.service         tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| |-/run/credentials/serial-getty@ttyS0.service tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+| `-/run/credentials/getty@tty5.service         tmpfs                             tmpfs      ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap
+|-/etc                                          overlay                           overlay    rw,relatime,lowerdir=/root/etc,upperdir=/run/trackc/volatile/etc/upper,workdir=/run/trackc/volatile/etc/work,uuid=on
+|-/var                                          overlay                           overlay    rw,relatime,lowerdir=/root/var,upperdir=/run/trackc/persist/var/upper,workdir=/run/trackc/persist/var/work
+| `-/var/tmp                                    tmpfs                             tmpfs      rw,nosuid,nodev,noexec,relatime,inode64
+|-/home                                         overlay                           overlay    rw,nosuid,nodev,noexec,relatime,lowerdir=/root/home,upperdir=/run/trackc/persist/home/upper,workdir=/run/trackc/persist/home/work
+|-/boot                                         systemd-1                         autofs     rw,relatime,fd=54,pgrp=1,timeout=120,minproto=5,maxproto=5,direct,pipe_ino=12684
+`-/tmp                                          tmpfs                             tmpfs      rw,nosuid,nodev,noexec,relatime,inode64
+
+$ du -sxb /boot /usr /var /opt /lib/modules /lib/firmware /usr/local
+0	/boot
+1482752272	/usr
+0	/var
+0	/opt
+
+$ installed size by group (dpkg Installed-Size, KiB)
+containers               160604 KiB
+kernel+firmware          108914 KiB
+lab-remote-access          7331 KiB
+nvidia-driver+ctk        208176 KiB
+other                    544702 KiB
+
+$ top 25 packages by installed size (KiB)
+126875	libnvidia-gpucomp
+114123	firmware-iwlwifi
+108901	linux-image-6.12.117+deb13-amd64
+101345	firmware-nvidia-gsp
+98778	libcuda1
+85571	podman
+55020	containernetworking-plugins
+40943	libnvidia-ptxjitcompiler1
+27828	nvidia-container-toolkit-base
+19187	firmware-realtek
+18457	coreutils
+17285	netavark
+13226	libc6
+10236	udev
+9944	systemd
+8115	libssl3t64
+7815	perl-base
+7196	bash
+6825	libsystemd-shared
+6705	sudo
+6587	dpkg
+5233	nvidia-container-toolkit
+5011	openssh-client
+5010	gnupg-l10n
+4986	util-linux
+
+$ lab-only remote-access packages (excluded from 'identical functionality')
+3429	openssh-server
+	wireless-regdb
+3902	wpasupplicant
+
+$ sh -c ls /var/lib/containers/storage 2>/dev/null && podman images 2>/dev/null
+tmp
+[exit 1]
+

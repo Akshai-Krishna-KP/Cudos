@@ -32,7 +32,8 @@ PKGS=$(pkgs "$SRC/build/rootfs/packages.txt")
 [[ $VARIANT == dev ]] && PKGS="$PKGS,$(pkgs "$SRC/build/rootfs/packages-dev.txt")"
 V=$NVIDIA_DEB_VERSION; C=$NVIDIA_CTK_DEB_VERSION
 # NVIDIA userspace kept in the image: CUDA driver lib, NVML, GSP firmware, CTK (CDI).
-NV_KEEP="libcuda1=$V,libnvidia-ml1=$V,firmware-nvidia-gsp=$V,nvidia-modprobe=$V"
+# nvidia-powerd = Dynamic Boost: without it the laptop GPU runs ~12% slower (docs/results/phase8/powerd-experiment-baseline.txt).
+NV_KEEP="libcuda1=$V,libnvidia-ml1=$V,firmware-nvidia-gsp=$V,nvidia-modprobe=$V,nvidia-powerd=$V"
 NV_KEEP="$NV_KEEP,nvidia-container-toolkit=$C,nvidia-container-toolkit-base=$C,libnvidia-container-tools=$C,libnvidia-container1=$C"
 # Build-only: compiled/extracted, then purged (modules + nvidia-smi binary are kept).
 NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,linux-headers-amd64,dkms"

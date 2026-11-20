@@ -15,3 +15,4 @@ crun              # OCI runtime used by podman (smaller/faster than runc)
 uidmap            # newuidmap/newgidmap for rootless podman
 nftables          # default-deny firewall (hardening)
 procps            # free/ps/sysctl for the demo and measurements
+dbus              # system bus: needed by nvidia-powerd (and lets systemctl/podman talk to systemd)
