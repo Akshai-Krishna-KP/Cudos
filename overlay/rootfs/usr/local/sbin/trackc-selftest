@@ -12,7 +12,11 @@ check root-mounted-ro    has / ro
 check root-write-refused sh -c '! touch /.trackc-probe 2>/dev/null'
 check etc-overlay        test "$(findmnt -no FSTYPE /etc)" = overlay
 check var-overlay        test "$(findmnt -no FSTYPE /var)" = overlay
-check persist-mode       test "$(cat /run/trackc/mode)" = persistent
+if grep -qw trackc.live /proc/cmdline; then
+  check live-volatile-state test "$(cat /run/trackc/mode)" = volatile   # live ISO: state in RAM by design
+else
+  check persist-mode       test "$(cat /run/trackc/mode)" = persistent
+fi
 for m in /tmp /var/tmp /home; do
   for o in nodev nosuid noexec; do check "$m:$o" has "$m" "$o"; done
 done

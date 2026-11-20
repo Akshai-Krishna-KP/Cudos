@@ -12,6 +12,7 @@
 set -eu
 IMG=localhost/trackc-cuda-dev:13.5
 TAR=/run/trackc/persist/images/trackc-cuda-dev.tar
+[ -r "$TAR" ] || TAR=/run/trackc/iso/images/trackc-cuda-dev.tar   # live ISO
 U=$(id -un); W=/var/lib/cuda-work/$U
 if [ "${1:-}" = -h ] || [ "${1:-}" = --help ]; then sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
 [ "$(id -u)" != 0 ] || { echo "cuda-dev: run it as a normal user (rootless), not as root" >&2; exit 1; }

@@ -16,7 +16,7 @@ RUN rm -f /etc/apt/sources.list.d/debian.sources && \
       # rootfs bootstrap (debootstrap-compatible, reproducible, works in containers)
       mmdebstrap ca-certificates \
       # image assembly
-      squashfs-tools dosfstools mtools gdisk e2fsprogs zstd \
+      squashfs-tools dosfstools mtools gdisk e2fsprogs zstd xorriso \
       # Unified Kernel Image (kernel + initrd + cmdline in one EFI binary)
       systemd-ukify systemd-boot-efi python3-pefile binutils \
     && rm -rf /var/lib/apt/lists/*

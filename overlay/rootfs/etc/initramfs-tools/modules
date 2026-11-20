@@ -2,3 +2,7 @@
 squashfs
 overlay
 ext4
+isofs
+loop
+sr_mod
+cdrom

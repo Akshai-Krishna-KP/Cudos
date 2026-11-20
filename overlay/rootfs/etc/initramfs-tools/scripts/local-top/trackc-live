@@ -1,0 +1,20 @@
+#!/bin/sh
+# trackc-live: boot from the live ISO (kernel cmdline has trackc.live). The root squashfs
+# is a FILE on the iso9660 volume labelled TRACKC_LIVE (CD/DVD, VM, or the ISO written to a
+# USB stick): mount it and attach live/rootfs.squashfs to /dev/loop0 (root=/dev/loop0).
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+grep -qw trackc.live /proc/cmdline || exit 0
+. /scripts/functions
+for m in isofs loop sr_mod cdrom usb_storage uas; do modprobe -q $m 2>/dev/null; done
+mkdir -p /run/trackc/iso
+i=0
+while [ $i -lt 150 ]; do
+  [ -e /dev/disk/by-label/TRACKC_LIVE ] && break
+  sleep 0.2; i=$((i + 1))
+done
+mount -t iso9660 -o ro /dev/disk/by-label/TRACKC_LIVE /run/trackc/iso || panic "trackc-live: TRACKC_LIVE medium not found"
+losetup -r /dev/loop0 /run/trackc/iso/live/rootfs.squashfs || panic "trackc-live: cannot attach rootfs.squashfs"
+log_success_msg "trackc-live: root is live/rootfs.squashfs on the ISO"
+exit 0
