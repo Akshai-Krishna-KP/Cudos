@@ -52,7 +52,7 @@ ch useradd --system --create-home --home-dir /var/lib/trackc-bench --shell /usr/
 echo "bench:100000:65536" > "$R/etc/subuid"; echo "bench:100000:65536" > "$R/etc/subgid"
 mkdir -p "$R/usr/share/trackc"
 install -m 644 "$SRC/out/trackc-bench.tar" "$R/usr/share/trackc/trackc-bench.tar"
-ch systemctl enable gpu-autoconfig.service trackc-bench.service trackc-dashboard.service nftables.service >/dev/null
+ch systemctl enable gpu-autoconfig.service trackc-bench.service trackc-dashboard.service nftables.service nvidia-powerd.service >/dev/null
 ch systemctl enable trackc-selftest.service >/dev/null   # boot-time check of read-only root + mount flags
 ch systemctl mask getty@tty1.service systemd-timesyncd.service apt-daily.timer apt-daily-upgrade.timer >/dev/null 2>&1 || true
 mkdir -p "$R/var/log/journal"
