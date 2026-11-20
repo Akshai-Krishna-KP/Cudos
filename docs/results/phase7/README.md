@@ -16,3 +16,12 @@ history in Git).
 Limits of this check: both builds ran on the same machine using the cached .debs
 (`cache/mmdebstrap-debs`, signature-checked by apt); the benchmark container archive
 (`out/trackc-bench.tar`) is an input here and was not rebuilt between the two builds.
+
+## Final image on our kernel (6.12.118-trackc)
+
+Two clean release builds from the same kernel packages: squashfs, UKI and package list
+**identical** (`compare-trackc.txt`). The kernel packages themselves were rebuilt once more
+(`compare-kernel.txt`): the `.config` is identical, but the `linux-image`/`linux-headers`
+.debs differ between builds (not yet investigated: likely build IDs or file metadata inside
+the packages). So the image is reproducible from a given set of kernel packages; the kernel
+build itself is not yet bit-for-bit reproducible.
