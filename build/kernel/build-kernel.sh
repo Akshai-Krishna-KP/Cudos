@@ -13,7 +13,11 @@ V=$KERNEL_VERSION; O=$SRC/out/kernel; W=/build
 rm -rf "$O"; mkdir -p "$O" "$W"
 tar -xf "$SRC/cache/kernel/linux-$V.tar.xz" -C "$W"
 cd "$W/linux-$V"
-deb=$(ls "$SRC"/cache/mmdebstrap-debs/linux-image-6.12.*+deb13-amd64_*.deb | head -1)
+deb=$(ls "$SRC"/cache/mmdebstrap-debs/linux-image-6.12.*+deb13-amd64_*.deb 2>/dev/null | head -1 || true)
+if [[ -z $deb ]]; then   # clean clone: fetch the pinned Debian kernel package for its config
+  (cd /tmp && apt-get -qq update && apt-get -qq download "$KERNEL_BASECONFIG_PKG") >/dev/null
+  deb=$(ls /tmp/linux-image-*.deb | head -1)
+fi
 dpkg-deb --fsys-tarfile "$deb" | tar -xO --wildcards './boot/config-*' > .config
 cat "$SRC"/build/kernel/lsmod-*.txt | sort -u | awk '{print $1, 0, 0}' > /tmp/lsmod
 make -s olddefconfig
