@@ -36,3 +36,15 @@ in the image). This file lists the groups and every **proprietary** item with it
 Not shipped: CUDA toolkit (nvcc, headers, static libs), cuDNN (benchmark uses cuBLAS + custom kernels; cuDNN would add ~2 GB), NVIDIA X/GL/Vulkan/video libraries.
 
 Secure Boot: the NVIDIA modules are built unsigned in this version; Secure Boot must be off (documented limitation, signing is future work).
+
+## Installed by the user at runtime (not shipped in any image)
+
+`lazarus-install` downloads packages directly from NVIDIA's official CUDA repository (and
+dependencies from the Ubuntu archive) onto the user's own stick, under NVIDIA's own licence
+terms (CUDA EULA, cuDNN/NCCL/cuTENSOR SLAs) that the user accepts by installing. The project
+does not redistribute them; the image ships only the repository key (pinned) and a curated
+list of package names (`overlay/rootfs-dev/usr/share/trackc/cuda-dev/libraries.txt`).
+The `cuda-dev` toolkit archive (CUDA 13.5 nvcc, cudart, cuBLAS, cuRAND, cuFFT, NVRTC,
+nvJitLink, NVTX; Ubuntu 24.04 base) is copied onto the stick's persist partition; it is
+built from unmodified NVIDIA packages (CUDA EULA: redistributable components plus the
+toolkit for development use by the stick's owner).

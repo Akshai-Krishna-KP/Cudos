@@ -83,7 +83,7 @@ normally set up a CUDA box.
 
 ### Using it: your own CUDA code
 
-Log in on the console or over SSH (dev image, key only) and run `cuda-dev`: nvcc, gcc,
+Log in as `lazarus` (password `lazarus` on the console; SSH key-only) and run `cuda-dev`: nvcc, gcc,
 cuBLAS, cuRAND, cuFFT and NVRTC in a rootless container with the GPU, no network, no
 capabilities. The workspace `~/cuda` lives on the persistent partition (`/home` is noexec).
 Examples (`benchmark/examples/`) print CPU vs GPU time; measured on Laptop 2
@@ -94,6 +94,15 @@ Examples (`benchmark/examples/`) print CPU vs GPU time; measured on Laptop 2
 | Matrix multiply 2048², our tiled CUDA kernel | 2,426 ms | 19.2 ms | 126× |
 | Matrix multiply 2048², cuBLAS | 2,426 ms | 2.5 ms | 971× |
 | Monte Carlo π, 10⁹ points (cuRAND) | 13.4 s (scaled from 5×10⁷) | 10.5 ms | 1,275× |
+
+### The `lazarus` package manager
+
+`lazarus-list` shows every package on NVIDIA's CUDA mirror; `lazarus-install <pkg>` installs any
+of them (or a curated, CUDA-13.5-pinned name such as `cudnn`) with dependencies resolved by
+apt, into the user's toolkit layer on the persistent partition; the read-only system never
+changes. Also `lazarus-list --local|--installed`, `lazarus-remove`, `lazarus-reset`,
+`lazarus-update`, `lazarus-mirror --test|--auto`. Details and verified mirror list:
+`docs/TECHNICAL.md` section 7.
 
 ## 5. Security hardening
 
