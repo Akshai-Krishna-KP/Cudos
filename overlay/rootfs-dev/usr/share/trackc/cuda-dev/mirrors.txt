@@ -1,0 +1,14 @@
+# lazarus mirrors (tested 2026-11-21 from India over a phone hotspot). First = default.
+# Removed: mirror.cse.iitk.ac.in (serves the index but package files return 404).
+# kind    url
+# NVIDIA's official CUDA repository for Ubuntu 24.04 (signed by NVIDIA; the key is pinned):
+nvidia    https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64
+nvidia    https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu2404/x86_64
+# Ubuntu 24.04 archive mirrors (dependencies such as compilers and libc; signed by Ubuntu):
+ubuntu    http://archive.ubuntu.com/ubuntu
+ubuntu    http://mirror.kakao.com/ubuntu
+ubuntu    http://mirror.aarnet.edu.au/pub/ubuntu/archive
+ubuntu    http://mirrors.edge.kernel.org/ubuntu
+ubuntu    http://in.archive.ubuntu.com/ubuntu
+ubuntu    http://mirrors.dotsrc.org/ubuntu
+ubuntu    http://ftp.jaist.ac.jp/pub/Linux/ubuntu

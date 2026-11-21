@@ -1,0 +1,3 @@
+#!/bin/sh
+# lazarus-remove: short form of "lazarus remove" (see: lazarus --help)
+exec lazarus remove "$@"

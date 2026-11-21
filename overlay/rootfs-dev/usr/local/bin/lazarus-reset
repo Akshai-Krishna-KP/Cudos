@@ -1,0 +1,3 @@
+#!/bin/sh
+# lazarus-reset: short form of "lazarus reset" (see: lazarus --help)
+exec lazarus reset "$@"

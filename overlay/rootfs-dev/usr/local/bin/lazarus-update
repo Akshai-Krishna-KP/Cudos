@@ -1,0 +1,3 @@
+#!/bin/sh
+# lazarus-update: short form of "lazarus update" (see: lazarus --help)
+exec lazarus update "$@"

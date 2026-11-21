@@ -1,0 +1,198 @@
+#!/bin/bash
+# lazarus: package manager for the appliance's CUDA toolkit (the cuda-dev container).
+# Installs packages from NVIDIA's official CUDA repository (and the Ubuntu archive for
+# dependencies) like apt does: dependencies are resolved and set up automatically.
+# Everything goes into YOUR toolkit layer on the persistent partition; the read-only
+# system never changes. Package signatures are always checked (NVIDIA key pinned).
+#
+#   lazarus list [pattern]          all packages on the NVIDIA mirror (* = installed)
+#   lazarus list --local            the built-in curated list (pinned to CUDA 13.5)
+#   lazarus list --installed        packages you added
+#   lazarus install <pkg|name>...   install (any NVIDIA package, or a curated name like cudnn)
+#   lazarus remove <pkg|name>...    remove
+#   lazarus reset                   back to the original toolkit (frees the space)
+#   lazarus update                  refresh the package index now
+#   lazarus mirror [--test|--auto|set nvidia|ubuntu <url>]   show, test, choose mirrors
+# Short forms: lazarus-list, lazarus-install, lazarus-remove, lazarus-reset,
+#              lazarus-update, lazarus-mirror.
+set -euo pipefail
+BASE=localhost/trackc-cuda-dev:13.5
+USERIMG=localhost/trackc-cuda-dev-user:latest
+TAR=/run/trackc/persist/images/trackc-cuda-dev.tar
+[[ -r $TAR ]] || TAR=/run/trackc/iso/images/trackc-cuda-dev.tar
+SHARE=${TRACKC_CUDA_SHARE:-/usr/share/trackc/cuda-dev}
+STATE=${XDG_CACHE_HOME:-$HOME/.cache}/lazarus          # apt index kept between runs (fast)
+CONF=${XDG_CONFIG_HOME:-$HOME/.config}/lazarus/mirrors.conf
+MAXAGE=$((24 * 3600))                                 # refresh the index after one day
+P() { podman --log-level=error "$@"; }
+die() { echo "lazarus: $*" >&2; exit 1; }
+[[ $(id -u) != 0 ]] || die "run it as a normal user (rootless), not as root"
+mkdir -p "$STATE/lists" "$(dirname "$CONF")"
+
+mirror_default() { awk -v k="$1" '$1==k{print $2; exit}' "$SHARE/mirrors.txt"; }
+mirror() {   # mirror nvidia|ubuntu -> URL (user choice, else first in mirrors.txt)
+  local v=; [[ -f $CONF ]] && v=$(awk -F= -v k="$1" '$1==k{print $2}' "$CONF")
+  echo "${v:-$(mirror_default "$1")}"
+}
+ensure_base() {
+  P image exists "$BASE" 2>/dev/null && return 0
+  [[ -r $TAR ]] || die "CUDA toolkit image not installed ($TAR)"
+  echo "lazarus: first use, loading the CUDA toolkit image (1-2 minutes)..." >&2
+  P load -q -i "$TAR" >/dev/null
+}
+current_img() { if P image exists "$USERIMG" 2>/dev/null; then echo "$USERIMG"; else echo "$BASE"; fi; }
+index_fresh() { [[ -f $STATE/stamp ]] && (( $(date +%s) - $(stat -c %Y "$STATE/stamp") < MAXAGE )); }
+alias_pkgs() { awk -v n="$1" '$1==n {sub(/^[^|]*\| */,""); print}' "$SHARE/libraries.txt"; }
+
+# Run apt in a throw-away container from the current toolkit image; the apt index lives in
+# $STATE (persistent, so it is not downloaded every time). Container root = you, in a user
+# namespace; host network only for downloads. With commit=1 the result becomes $USERIMG.
+apt_run() {   # apt_run <commit 0|1> <refresh 0|1> "<commands>"
+  ensure_base
+  local commit=$1 refresh=$2 cmds=$3 from c=lazarus-apt-$$
+  from=$(current_img)
+  local NV UB; NV=$(mirror nvidia); UB=$(mirror ubuntu)
+  P run --name "$c" --network=host -v "$SHARE:/trackc:ro" -v "$STATE/lists:/var/lib/apt/lists" \
+    -e NV="$NV" -e UB="$UB" -e REFRESH="$refresh" "$from" bash -ec '
+    export DEBIAN_FRONTEND=noninteractive
+    # Uncompressed index (read directly by "lazarus list"); no translations; retries; pipelining.
+    APT=(-o Acquire::GzipIndexes=false -o Acquire::Languages=none -o Acquire::Retries=3 -o Acquire::http::Pipeline-Depth=10 -q)
+    rm -f /etc/apt/apt.conf.d/docker-gzip-indexes
+    rm -f /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list
+    # Lean Ubuntu index (main+universe, no backports): faster updates.
+    printf "deb %s noble main universe\ndeb %s noble-updates main universe\ndeb http://security.ubuntu.com/ubuntu noble-security main universe\n" "$UB" "$UB" > /etc/apt/sources.list.d/ubuntu.list
+    if [ ! -f /usr/share/keyrings/cuda-archive-keyring.gpg ] || ! dpkg -s ca-certificates >/dev/null 2>&1; then
+      echo "[lazarus] first run: setting up apt (CA certificates, NVIDIA key, dependencies)"
+      rm -f /etc/apt/sources.list.d/cuda.list
+      apt-get "${APT[@]}" update >/dev/null
+      apt-get "${APT[@]}" -y -f install >/dev/null        # complete the offline-built toolkit
+      apt-get "${APT[@]}" -y install --no-install-recommends ca-certificates >/dev/null
+      install -m 644 /trackc/cuda-archive-keyring.gpg /usr/share/keyrings/cuda-archive-keyring.gpg
+      REFRESH=1
+    fi
+    echo "deb [signed-by=/usr/share/keyrings/cuda-archive-keyring.gpg] $NV/ /" > /etc/apt/sources.list.d/cuda.list
+    if [ "$REFRESH" = 1 ] || [ -z "$(ls /var/lib/apt/lists/*Packages* 2>/dev/null)" ]; then
+      echo "[lazarus] updating package index ($NV)"; apt-get "${APT[@]}" update >/dev/null
+    fi
+    '"$cmds"'
+    apt-get clean
+  ' || { P rm -f "$c" >/dev/null 2>&1; die "apt failed (no internet? try: lazarus mirror --auto)"; }
+  touch "$STATE/stamp"
+  if [[ $commit == 1 ]]; then P commit -q "$c" "$USERIMG" >/dev/null; fi
+  P rm -f "$c" >/dev/null
+  [[ $commit == 1 ]] && { P image prune -f >/dev/null 2>&1 || true; }
+  return 0
+}
+# One-time setup (CA certificates, NVIDIA key, the toolkit's missing dependencies), saved into
+# your toolkit layer so it never runs again.
+ensure_setup() {
+  ensure_base
+  P run --rm --network=none "$(current_img)" test -f /usr/share/keyrings/cuda-archive-keyring.gpg 2>/dev/null && return 0
+  apt_run 1 1 ":"
+}
+installed_set() { P run --rm --network=none "$(current_img)" dpkg-query -W -f '${Package}\n' 2>/dev/null; }
+nv_index() { ls "$STATE"/lists/*developer.download.nvidia*_Packages 2>/dev/null | head -1; }
+
+cmd_list() {
+  case "${1:-}" in
+    --local)
+      local have; ensure_base; have=$(installed_set)
+      echo "Built-in curated libraries (pinned to CUDA 13.5; lazarus install <name>):"
+      grep -v '^#' "$SHARE/libraries.txt" | awk 'NF' | while read -r n size rest; do
+        local desc=${rest%%|*} first; first=$(alias_pkgs "$n" | awk '{print $1}'); first=${first%%=*}
+        local mark="  "; grep -qx "$first" <<<"$have" && mark="* "
+        printf '  %s%-11s %6s  %s\n' "$mark" "$n" "$size" "$desc"
+      done
+      echo "  (* = installed. Always included: cuBLAS, cuRAND, cuFFT, NVRTC, nvJitLink, NVTX)"
+      return ;;
+    --installed)
+      ensure_base
+      # Packages you added that come from the NVIDIA mirror (helper packages from the
+      # one-time apt setup are not listed).
+      local idx; idx=$(nv_index)
+      comm -13 <(P run --rm --network=none "$BASE" dpkg-query -W -f '${Package}\n' | sort) <(installed_set | sort) \
+        | { if [[ -n $idx ]]; then grep -Fxf <(awk '/^Package: /{print $2}' "$idx" | sort -u); else cat; fi; } \
+        | sed 's/^/  /' || echo "  (none)"; return ;;
+  esac
+  ensure_setup
+  index_fresh && [[ -n $(nv_index) ]] || apt_run 0 1 ":"
+  local idx have pat=${1:-}; idx=$(nv_index); [[ -n $idx ]] || die "no package index (no internet?)"
+  have=$(installed_set)
+  awk -v RS= -v pat="$pat" '
+    { p=v=s=d=""; n=split($0, L, "\n")
+      for (i=1;i<=n;i++) { if (L[i] ~ /^Package: /) p=substr(L[i],10); else if (L[i] ~ /^Version: /) v=substr(L[i],10);
+        else if (L[i] ~ /^Installed-Size: /) s=substr(L[i],17); else if (L[i] ~ /^Description: /) d=substr(L[i],14) }
+      if (pat != "" && index(tolower(p" "d), tolower(pat)) == 0) next
+      last[p]=v; size[p]=s; desc[p]=d }
+    END { for (p in last) printf "%s\t%s\t%d\t%s\n", p, last[p], size[p]/1024, desc[p] }' "$idx" | sort |
+  while IFS=$'\t' read -r p v s d; do
+    local mark="  "; grep -qx "$p" <<<"$have" && mark="* "
+    printf '%s%-40s %-24s %6s MB  %s\n' "$mark" "$p" "$v" "$s" "${d:0:60}"
+  done
+  echo "($(awk -v RS= 'END{print NR}' "$idx") package versions on $(mirror nvidia | cut -d/ -f3); * = installed; filter: lazarus list <word>)"
+}
+
+expand() {   # curated names -> pinned packages; anything else is used as a package name
+  local out=() n p
+  for n in "$@"; do p=$(alias_pkgs "$n"); if [[ -n $p ]]; then out+=($p); else out+=("$n"); fi; done
+  echo "${out[@]}"
+}
+
+cmd_mirror() {
+  case "${1:-}" in
+    "")
+      echo "nvidia: $(mirror nvidia)"; echo "ubuntu: $(mirror ubuntu)"
+      echo "(choose: lazarus mirror --test | --auto | set nvidia|ubuntu <url>)" ;;
+    set)
+      [[ ${2:-} == nvidia || ${2:-} == ubuntu ]] && [[ -n ${3:-} ]] || die "usage: lazarus mirror set nvidia|ubuntu <url>"
+      touch "$CONF"; sed -i "/^$2=/d" "$CONF"; echo "$2=${3%/}" >> "$CONF"; rm -f "$STATE/stamp"
+      echo "lazarus: $2 mirror = ${3%/} (index refreshes on next use)" ;;
+    --test|--auto)
+      local best_nv= best_ub= t_nv=999999 t_ub=999999 kind url host port t0 t
+      while read -r kind url; do
+        [[ $kind == nvidia || $kind == ubuntu ]] || continue
+        host=$(cut -d/ -f3 <<<"$url"); port=80; [[ $url == https:* ]] && port=443
+        t0=$(date +%s%N); ok=0
+        if [[ $kind == ubuntu ]]; then
+          # Reliability check: a real package file must exist (some mirrors have the index only).
+          path="/$(cut -d/ -f4- <<<"$url")/pool/main/n/netbase/netbase_6.4_all.deb"
+          timeout 6 bash -c "exec 3<>/dev/tcp/$host/80; printf 'HEAD %s HTTP/1.0\r\nHost: %s\r\n\r\n' '$path' '$host' >&3; head -1 <&3" 2>/dev/null | grep -q ' 200' && ok=1
+        else
+          timeout 5 bash -c "exec 3<>/dev/tcp/$host/$port" 2>/dev/null && ok=1
+        fi
+        if (( ok )); then
+          t=$(( ($(date +%s%N) - t0) / 1000000 )); printf '  %-7s %5d ms  %s\n' "$kind" "$t" "$url"
+          if [[ $kind == nvidia ]] && (( t < t_nv )); then t_nv=$t; best_nv=$url; fi
+          if [[ $kind == ubuntu ]] && (( t < t_ub )); then t_ub=$t; best_ub=$url; fi
+        else printf '  %-7s  ----  %s (unreachable or missing packages)\n' "$kind" "$url"; fi
+      done < <(grep -v '^#' "$SHARE/mirrors.txt")
+      if [[ $1 == --auto ]]; then
+        [[ -n $best_nv ]] && "$0" mirror set nvidia "$best_nv"
+        [[ -n $best_ub ]] && "$0" mirror set ubuntu "$best_ub"
+      else echo "(lazarus mirror --auto picks the fastest of each)"; fi ;;
+    *) die "usage: lazarus mirror [--test|--auto|set nvidia|ubuntu <url>]" ;;
+  esac
+}
+
+sub=${1:-help}; shift || true
+case $sub in
+  list) cmd_list "$@" ;;
+  install)
+    (( $# )) || die "usage: lazarus install <package|name>...   (see: lazarus list)"
+    ensure_setup; pk=$(expand "$@"); r=0; index_fresh || r=1
+    echo "lazarus: installing $* ..."
+    apt_run 1 "$r" "apt-get \"\${APT[@]}\" -y install --no-install-recommends $pk"
+    echo "lazarus: done. Your next cuda-dev commands use it." ;;
+  remove)
+    (( $# )) || die "usage: lazarus remove <package|name>..."
+    pk=$(expand "$@" | tr ' ' '\n' | sed 's/=.*//' | tr '\n' ' ')
+    apt_run 1 0 "apt-get \"\${APT[@]}\" -y purge $pk && apt-get \"\${APT[@]}\" -y autoremove --purge"
+    echo "lazarus: removed $*." ;;
+  reset)
+    if P image exists "$USERIMG" 2>/dev/null; then P rmi -f "$USERIMG" >/dev/null; P image prune -f >/dev/null 2>&1 || true; fi
+    echo "lazarus: back to the original CUDA 13.5 toolkit." ;;
+  update) ensure_setup; apt_run 0 1 ":"; echo "lazarus: package index updated ($(mirror nvidia | cut -d/ -f3))." ;;
+  mirror) cmd_mirror "$@" ;;
+  help|-h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) die "unknown command '$sub' (lazarus --help)" ;;
+esac

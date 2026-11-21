@@ -1,0 +1,3 @@
+#!/bin/sh
+# lazarus-mirror: short form of "lazarus mirror" (see: lazarus --help)
+exec lazarus mirror "$@"

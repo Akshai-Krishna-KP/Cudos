@@ -1,0 +1,3 @@
+#!/bin/sh
+# lazarus-list: short form of "lazarus list" (see: lazarus --help)
+exec lazarus list "$@"

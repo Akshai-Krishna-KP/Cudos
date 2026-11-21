@@ -8,8 +8,9 @@
     cuda-dev                                    # shell with nvcc, cuBLAS, cuRAND, cuFFT
 
   More CUDA libraries (needs internet):
-    lazarus-install                             # list: cuDNN, cuSOLVER, cuSPARSE, NCCL, NPP, ...
+    lazarus-list                                # cuDNN, cuSOLVER, cuSPARSE, NCCL, NPP, ... (* = installed)
     lazarus-install cudnn                       # into your toolkit, not the read-only system
+    lazarus-remove cudnn                        # remove again   (lazarus-reset: remove all)
 
   GPU status:      gpu-status  (live: gpu-watch, Ctrl-C quits; rerun benchmark: gpu-bench)
 

@@ -107,9 +107,9 @@ fi
 if [[ $VARIANT == portable ]]; then
   # Reuse the dev pieces that hold no secrets: cuda-dev, Wi-Fi units (used only if the
   # owner provides trackc/wifi.txt on the stick), examples.
-  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$SRC/overlay/rootfs-dev/usr/local/bin/lazarus-install" "$R/usr/local/bin/"
+  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$SRC"/overlay/rootfs-dev/usr/local/bin/lazarus* "$R/usr/local/bin/"
   install -d "$R/usr/share/trackc/cuda-dev"
-  install -m 644 "$SRC/overlay/rootfs-dev/usr/share/trackc/cuda-dev/libraries.txt" "$R/usr/share/trackc/cuda-dev/"
+  install -m 644 "$SRC/overlay/rootfs-dev/usr/share/trackc/cuda-dev/libraries.txt" "$SRC/overlay/rootfs-dev/usr/share/trackc/cuda-dev/mirrors.txt" "$R/usr/share/trackc/cuda-dev/"
   install -m 644 "$SRC/cache/nvidia-ubuntu2404/cuda-archive-keyring.gpg" "$R/usr/share/trackc/cuda-dev/"
   install -m 755 "$SRC/overlay/rootfs-dev/usr/local/sbin/trackc-wifi-start" "$R/usr/local/sbin/"
   install -m 644 "$SRC"/overlay/rootfs-dev/etc/systemd/system/trackc-wifi*.service "$R/etc/systemd/system/"

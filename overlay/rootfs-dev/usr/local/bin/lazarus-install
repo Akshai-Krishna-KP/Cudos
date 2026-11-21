@@ -1,16 +1,3 @@
 #!/bin/sh
-# lazarus-install: add optional CUDA 13.5 libraries to your CUDA toolkit (cuda-dev).
-# Libraries come from NVIDIA's signed repository and go into YOUR toolkit layer on the
-# persistent partition, never into the read-only system. Needs internet.
-#
-#   lazarus-install                  show the libraries (* = installed)
-#   lazarus-install cudnn nccl       install one or more
-#   lazarus-install --remove nccl    remove
-#   lazarus-install --reset          back to the original toolkit (frees the space)
-case "${1:-}" in
-  ""|-l|--list) exec cuda-dev list ;;
-  -r|--remove)  shift; exec cuda-dev remove "$@" ;;
-  --reset)      exec cuda-dev reset ;;
-  -h|--help)    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
-  *)            exec cuda-dev install "$@" ;;
-esac
+# lazarus-install: short form of "lazarus install" (see: lazarus --help)
+exec lazarus install "$@"
