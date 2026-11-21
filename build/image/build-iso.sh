@@ -40,7 +40,7 @@ cat > "$T/boot/grub/grub.cfg" <<EOF
 set timeout=5
 set default=0
 menuentry "Lazarus GPU appliance (live)" {
-  linux /live/vmlinuz $ARGS quiet loglevel=3
+  linux /live/vmlinuz $ARGS console=ttyS0,115200 console=tty0 quiet loglevel=3
   initrd /live/initrd.img
 }
 menuentry "Lazarus GPU appliance (live, show boot messages)" {
