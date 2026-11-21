@@ -56,7 +56,10 @@ ch sh -c 'dpkg -l | grep -E "^ii +(gcc|g\+\+|make|dkms|linux-headers|cpp)" | gre
 # --- 2. appliance
 cp -a "$SRC/overlay/rootfs/." "$R/"
 # Unprivileged benchmark user; home on /var (persist, exec allowed for container storage).
-ch useradd --system --create-home --home-dir /var/lib/trackc-bench --shell /usr/sbin/nologin bench
+# Fixed UID/GID: bench owns files on the persist partition, so its ID must not shift when a
+# package adds another system user (seen when systemd-resolved was added).
+ch groupadd --system --gid 900 bench
+ch useradd --system --uid 900 --gid 900 --create-home --home-dir /var/lib/trackc-bench --shell /usr/sbin/nologin bench
 echo "bench:100000:65536" > "$R/etc/subuid"; echo "bench:100000:65536" > "$R/etc/subgid"
 mkdir -p "$R/usr/share/trackc"
 install -m 644 "$SRC/out/trackc-bench.tar" "$R/usr/share/trackc/trackc-bench.tar"
