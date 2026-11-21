@@ -129,7 +129,7 @@ if [[ $VARIANT == portable ]]; then
 fi
 
 # --- 3c. live ISO kernel: initramfs finds the ISO and loop-mounts live/rootfs.squashfs
-if [[ $KERNEL == trackc-iso ]]; then
+if [[ $KERNEL == *-iso ]]; then
   cp -a "$SRC/overlay/iso/etc/initramfs-tools/scripts" "$R/etc/initramfs-tools/"
   grep -v '^#' "$SRC/overlay/iso/etc/initramfs-tools/modules-iso" >> "$R/etc/initramfs-tools/modules"
 fi

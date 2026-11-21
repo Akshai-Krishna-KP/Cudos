@@ -18,7 +18,7 @@
 set -euo pipefail
 SRC=/src
 VARIANT=${1:-release}
-KERNEL=${2:-debian}   # debian = Debian linux-image-amd64; trackc = our kernel (out/kernel); trackc-iso = live-ISO kernel (out/kernel-iso)
+KERNEL=${2:-debian}   # debian = Debian linux-image-amd64; debian-iso = same + live-ISO initramfs; trackc = our kernel (out/kernel); trackc-iso = live-ISO kernel (out/kernel-iso)
 KDIR=$SRC/out/kernel; [[ $KERNEL == trackc-iso ]] && KDIR=$SRC/out/kernel-iso
 source "$SRC/build/versions.env"
 OUT="$SRC/out/rootfs-$VARIANT"
@@ -45,7 +45,7 @@ NV_KEEP="libcuda1=$V,libnvidia-ml1=$V,firmware-nvidia-gsp=$V,nvidia-modprobe=$V,
 NV_KEEP="$NV_KEEP,nvidia-container-toolkit=$C,nvidia-container-toolkit-base=$C,libnvidia-container-tools=$C,libnvidia-container1=$C"
 # Build-only: compiled/extracted, then purged (modules + nvidia-smi binary are kept).
 NV_BUILD="nvidia-kernel-open-dkms=$V,nvidia-driver-cuda=$V,dkms"
-[[ $KERNEL == debian ]] && NV_BUILD="$NV_BUILD,linux-headers-amd64"
+[[ $KERNEL == debian* ]] && NV_BUILD="$NV_BUILD,linux-headers-amd64"   # debian-iso: Debian kernel (all drivers, Debian-signed) for the live ISO
 # trackc kernel headers run objtool, which links libelf (build-only; autoremoved after).
 [[ $KERNEL == trackc* ]] && NV_BUILD="$NV_BUILD,libelf1t64"
 

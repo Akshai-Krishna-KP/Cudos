@@ -2,7 +2,14 @@
 # gpu-status: one-shot report: GPU, driver, CUDA, Dynamic Boost, boot benchmark result.
 L=/run/trackc-bench/latest.json
 v() { sed -n "s/.*\"$1\":\([^,}]*\).*/\1/p" "$L" 2>/dev/null | tr -d '"'; }
-if ! command -v nvidia-smi >/dev/null || ! nvidia-smi -L >/dev/null 2>&1; then echo "GPU: not available (gpu-autoconfig: journalctl -u gpu-autoconfig)"; exit 1; fi
+if ! command -v nvidia-smi >/dev/null || ! nvidia-smi -L >/dev/null 2>&1; then
+  sb=$(od -An -t u1 -j4 -N1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c 2>/dev/null | tr -d ' ')
+  if ! grep -qs 0x10de /sys/bus/pci/devices/*/vendor; then echo "GPU:      no NVIDIA GPU in this computer (the OS still works; CUDA needs an NVIDIA GPU)"
+  elif [ "$sb" = 1 ]; then echo "GPU:      NVIDIA GPU found, but Secure Boot is ON and blocks the NVIDIA driver."
+       echo "          Turn Secure Boot OFF in the firmware (boot menu entry 'UEFI firmware settings') for GPU features."
+  else echo "GPU:      NVIDIA GPU found but the driver did not load (journalctl -u gpu-autoconfig)"; fi
+  exit 1
+fi
 nvidia-smi --query-gpu=name,driver_version,memory.total,temperature.gpu,power.draw,pstate,persistence_mode \
   --format=csv,noheader | awk -F', ' '{printf "GPU:      %s\nDriver:   %s   memory %s   %s C   %s   %s   persistence %s\n",$1,$2,$3,$4,$5,$6,$7}'
 echo "CUDA:     $(nvidia-smi | sed -n 's/.*CUDA UMD Version: *\([0-9.]*\).*/\1/p') driver API, toolkit via cuda-dev (CUDA 13.5)"
