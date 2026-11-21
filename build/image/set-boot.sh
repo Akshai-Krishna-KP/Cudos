@@ -8,7 +8,9 @@
 #   default-*  = saved_entry (every boot from now on)
 #   once-*     = next_entry (next boot only, then back to the default)
 set -euo pipefail
-HOST=${1:?host}; MODE=${2:?mode}
+# User on the target: "lazarus" on the appliance, "trackc" on the stock Ubuntu baseline.
+pick_user() { for u in lazarus trackc; do ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=error "$u@$1" true 2>/dev/null && { echo "$u"; return; }; done; echo trackc; }
+HOST=${1:?host}; MODE=${2:?mode}; TU=$(pick_user "$HOST")
 case $MODE in
   default-trackc) KV="saved_entry=trackc" ;;
   default-baseline) KV="saved_entry=0" ;;
@@ -17,7 +19,7 @@ case $MODE in
   *) echo "bad mode $MODE" >&2; exit 1 ;;
 esac
 ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-  -o LogLevel=error "trackc@$HOST" sudo bash -s "$KV" <<'REMOTE'
+  -o LogLevel=error "$TU@$HOST" sudo bash -s "$KV" <<'REMOTE'
 set -euo pipefail
 KV=$1; key=${KV%%=*}
 P=$(readlink -f /dev/disk/by-label/baseline-root)

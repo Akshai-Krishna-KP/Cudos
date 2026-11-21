@@ -1,1 +1,1 @@
-trackc ALL=(ALL) NOPASSWD: ALL
+lazarus ALL=(ALL) NOPASSWD: ALL

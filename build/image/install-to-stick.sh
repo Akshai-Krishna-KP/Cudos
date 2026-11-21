@@ -9,11 +9,13 @@
 # Safety: the target disk is found by the stick's USB serial on the target and
 # must be the USB disk the running baseline root lives on.
 set -euo pipefail
+# User on the target: "lazarus" on the appliance, "trackc" on the stock Ubuntu baseline.
+pick_user() { for u in lazarus trackc; do ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=error "$u@$1" true 2>/dev/null && { echo "$u"; return; }; done; echo trackc; }
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 HOST=${1:?host}; VARIANT=${2:?variant}; WIPE=${3:-}
 O="$REPO/out/$VARIANT"
 SERIAL=03018820042024224003
-S=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=error "trackc@$HOST")  # lab LAN: baseline and appliance alternate on the same IPs
+S=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=error "$(pick_user "$HOST")@$HOST")  # lab LAN: baseline and appliance alternate on the same IPs
 [[ -f $O/rootfs.squashfs && -f $O/trackc.efi ]] || { echo "build $VARIANT first" >&2; exit 1; }
 
 "${S[@]}" sudo bash -s "$SERIAL" "$WIPE" <<'REMOTE_PART'
@@ -67,4 +69,4 @@ grep -q '^GRUB_DEFAULT=saved' /etc/default/grub || sed -i 's/^GRUB_DEFAULT=.*/GR
 update-grub 2>&1 | tail -2
 grep -c "menuentry 'Track C GPU appliance'" /boot/grub/grub.cfg
 REMOTE_GRUB
-echo "installed. Boot it once:  ssh trackc@$HOST 'sudo grub-reboot trackc && sudo reboot'"
+echo "installed. Boot it once:  build/image/set-boot.sh $HOST once-trackc, then reboot"

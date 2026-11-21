@@ -13,11 +13,11 @@
 # re-found by MAC address on the /24 after every reboot.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-HOST= MAC= NAME= PHASE=phase1 BOOTS=5 RUNS=7 BENCH_CMD= MARKER= IDLE=300
+HOST= MAC= NAME= PHASE=phase1 TUSER=lazarus BOOTS=5 RUNS=7 BENCH_CMD= MARKER= IDLE=300
 while (($#)); do case $1 in
   --host) HOST=$2; shift 2;; --mac) MAC=${2,,}; shift 2;; --name) NAME=$2; shift 2;;
   --phase) PHASE=$2; shift 2;; --boots) BOOTS=$2; shift 2;; --bench-runs) RUNS=$2; shift 2;;
-  --bench-cmd) BENCH_CMD=$2; shift 2;; --marker) MARKER=$2; shift 2;; --idle) IDLE=$2; shift 2;;
+  --bench-cmd) BENCH_CMD=$2; shift 2;; --user) TUSER=$2; shift 2;; --marker) MARKER=$2; shift 2;; --idle) IDLE=$2; shift 2;;
   *) echo "unknown arg $1" >&2; exit 1;; esac; done
 [[ -n $HOST && -n $MAC && -n $NAME ]] || { sed -n 2,15p "$0"; exit 1; }
 OUT="$REPO/docs/results/$PHASE/$NAME"; mkdir -p "$OUT/raw"
@@ -25,7 +25,7 @@ KH="$REPO/cache/known_hosts_trackc"
 SSH=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o ConnectTimeout=5
      -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error)  # lab LAN; baseline and custom share the IP but not the host key
 log() { echo "[$(date +%T)] $*" | tee -a "$OUT/run.log"; }
-t() { "${SSH[@]}" "trackc@$HOST" "$@"; }
+t() { "${SSH[@]}" "$TUSER@$HOST" "$@"; }
 
 find_host() {  # wait (max ~6 min) for the target to answer SSH; re-find by MAC if the IP moved
   local net=${HOST%.*} i
@@ -41,9 +41,9 @@ find_host() {  # wait (max ~6 min) for the target to answer SSH; re-find by MAC 
 
 push_collector() {
   scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
-    "$REPO/measure/collect.sh" "trackc@$HOST:/tmp/trackc-collect.sh"
+    "$REPO/measure/collect.sh" "$TUSER@$HOST:/tmp/trackc-collect.sh"
   scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
-    "$REPO/measure/bench-appliance.sh" "trackc@$HOST:/tmp/trackc-bench-appliance.sh"
+    "$REPO/measure/bench-appliance.sh" "$TUSER@$HOST:/tmp/trackc-bench-appliance.sh"
 }
 collect() { push_collector; t "sudo BENCH_CMD='$BENCH_CMD' BENCH_RUNS=$RUNS BENCH_START_MARKER='$MARKER' bash /tmp/trackc-collect.sh /var/lib/trackc/measure $*"; }
 
@@ -59,7 +59,7 @@ if [[ -z $BENCH_CMD ]]; then
   if ! t "test -x $BENCH_CMD"; then
     log "building trackc_bench on target"
     scp -q -i "$HOME/.ssh/trackc_ed25519" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=error \
-      "$REPO/benchmark/src/trackc_bench.cu" "trackc@$HOST:/tmp/"
+      "$REPO/benchmark/src/trackc_bench.cu" "$TUSER@$HOST:/tmp/"
     t 'cd /tmp && /usr/local/cuda/bin/nvcc -O2 -arch=sm_89 -o trackc_bench trackc_bench.cu -lcublas && sudo install -m 755 trackc_bench /opt/trackc/'
   fi
 fi

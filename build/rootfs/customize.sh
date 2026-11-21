@@ -71,24 +71,25 @@ rm -rf "$R/var/lib/apt/lists/"*
 # --- 3. dev variant: lab remote access (not part of the graded release image)
 if [[ $VARIANT == dev ]]; then
   cp -a "$SRC/overlay/rootfs-dev/." "$R/"
-  ch useradd --create-home --shell /bin/bash --groups sudo trackc
-  install -d -m 700 "$R/home/trackc/.ssh"
-  install -m 600 "$SRC/out/dev-secrets/authorized_keys" "$R/home/trackc/.ssh/authorized_keys"
-  ch chown -R trackc:trackc /home/trackc
+  # The appliance user is "lazarus" (password "lazarus", chosen by the team for the demo).
+  # The password only works on the local console: SSH stays key-only (sshd AllowUsers lazarus).
+  LU=lazarus
+  ch useradd --create-home --shell /bin/bash --groups sudo "$LU"
+  echo "$LU:lazarus" | ch chpasswd
+  install -d -m 700 "$R/home/$LU/.ssh"
+  install -m 600 "$SRC/out/dev-secrets/authorized_keys" "$R/home/$LU/.ssh/authorized_keys"
+  ch chown -R "$LU:$LU" "/home/$LU"
   # cuda-dev: own subordinate ID range (useradd may have reused bench's), workspace link
-  # (~/cuda -> /var/lib/cuda-work/trackc, created at boot by tmpfiles), example sources.
-  sed -i '/^trackc:/d' "$R/etc/subuid" "$R/etc/subgid"
-  echo "trackc:200000:65536" >> "$R/etc/subuid"; echo "trackc:200000:65536" >> "$R/etc/subgid"
-  ln -sfn /var/lib/cuda-work/trackc "$R/home/trackc/cuda"; ch chown -h trackc:trackc /home/trackc/cuda
-  # cuda-dev install: library list + NVIDIA ubuntu2404 repo key (pinned, build/nvidia/fetch-keyring.sh)
+  # (~/cuda -> /var/lib/cuda-work/$LU, created at boot by tmpfiles), example sources.
+  sed -i "/^$LU:/d" "$R/etc/subuid" "$R/etc/subgid"
+  echo "$LU:200000:65536" >> "$R/etc/subuid"; echo "$LU:200000:65536" >> "$R/etc/subgid"
+  ln -sfn "/var/lib/cuda-work/$LU" "$R/home/$LU/cuda"; ch chown -h "$LU:$LU" "/home/$LU/cuda"
+  # cuda-dev install / lazarus-install: library list + NVIDIA ubuntu2404 repo key (pinned)
   install -m 644 "$SRC/cache/nvidia-ubuntu2404/cuda-archive-keyring.gpg" "$R/usr/share/trackc/cuda-dev/cuda-archive-keyring.gpg"
   install -d "$R/usr/share/trackc/examples"
   install -m 644 "$SRC"/benchmark/examples/* "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
-  # Console fallback login (same generated password as the baseline, from cache/).
-  if [[ -f $SRC/cache/baseline-credentials.txt ]]; then
-    pw=$(sed -n 's/^password=//p' "$SRC/cache/baseline-credentials.txt")
-    echo "trackc:$pw" | ch chpasswd
-  fi
+  # DNS for Wi-Fi/DHCP (resolv.conf points at the systemd-resolved stub).
+  ch systemctl enable systemd-resolved.service >/dev/null
   # shellcheck source=/dev/null
   source "$SRC/cache/wifi.env"
   args=("$WIFI_SSID" "$WIFI_PASSWORD"); [[ -n ${WIFI2_SSID:-} ]] && args+=("$WIFI2_SSID" "$WIFI2_PASSWORD")
@@ -103,7 +104,7 @@ fi
 if [[ $VARIANT == portable ]]; then
   # Reuse the dev pieces that hold no secrets: cuda-dev, Wi-Fi units (used only if the
   # owner provides trackc/wifi.txt on the stick), examples.
-  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$R/usr/local/bin/cuda-dev"
+  install -m 755 "$SRC/overlay/rootfs-dev/usr/local/bin/cuda-dev" "$SRC/overlay/rootfs-dev/usr/local/bin/lazarus-install" "$R/usr/local/bin/"
   install -d "$R/usr/share/trackc/cuda-dev"
   install -m 644 "$SRC/overlay/rootfs-dev/usr/share/trackc/cuda-dev/libraries.txt" "$R/usr/share/trackc/cuda-dev/"
   install -m 644 "$SRC/cache/nvidia-ubuntu2404/cuda-archive-keyring.gpg" "$R/usr/share/trackc/cuda-dev/"
@@ -111,15 +112,16 @@ if [[ $VARIANT == portable ]]; then
   install -m 644 "$SRC"/overlay/rootfs-dev/etc/systemd/system/trackc-wifi*.service "$R/etc/systemd/system/"
   install -m 644 "$SRC/overlay/rootfs-dev/etc/systemd/network/25-trackc-wifi.network" "$R/etc/systemd/network/"
   cp -a "$SRC/overlay/rootfs-portable/." "$R/"
-  ch useradd --create-home --shell /bin/bash gpu
-  sed -i '/^gpu:/d' "$R/etc/subuid" "$R/etc/subgid"
-  echo "gpu:200000:65536" >> "$R/etc/subuid"; echo "gpu:200000:65536" >> "$R/etc/subgid"
-  ln -sfn /var/lib/cuda-work/gpu "$R/home/gpu/cuda"; ch chown -h gpu:gpu /home/gpu/cuda
+  ch useradd --create-home --shell /bin/bash lazarus
+  echo "lazarus:lazarus" | ch chpasswd           # console auto-login anyway; SSH stays key-only
+  sed -i '/^lazarus:/d' "$R/etc/subuid" "$R/etc/subgid"
+  echo "lazarus:200000:65536" >> "$R/etc/subuid"; echo "lazarus:200000:65536" >> "$R/etc/subgid"
+  ln -sfn /var/lib/cuda-work/lazarus "$R/home/lazarus/cuda"; ch chown -h lazarus:lazarus /home/lazarus/cuda
   install -d "$R/usr/share/trackc/examples"
   install -m 644 "$SRC"/benchmark/examples/* "$SRC/benchmark/src/trackc_bench.cu" "$R/usr/share/trackc/examples/"
   rm -f "$R"/etc/ssh/ssh_host_*                      # no shared host keys in a shared image
   ch systemctl disable ssh.service ssh.socket >/dev/null 2>&1 || true
-  ch systemctl enable systemd-networkd.service trackc-grow-persist.service trackc-provision.service >/dev/null
+  ch systemctl enable systemd-networkd.service systemd-resolved.service trackc-grow-persist.service trackc-provision.service >/dev/null
   ch passwd -l root >/dev/null
 fi
 
