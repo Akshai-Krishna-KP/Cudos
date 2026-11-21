@@ -60,16 +60,18 @@ cp "$SRC/out/trackc-cuda-dev.tar" "$T/images/"
 echo "Track C GPU appliance live medium" > "$T/live/trackc-live.id"   # found by the initramfs
 cp "$SRC/overlay/esp-portable/README.txt" "$T/README.txt"
 
-# 5. EFI image inside the ISO + the Debian/Ubuntu hybrid layout (xorriso): -isohybrid-gpt-basdat
-#    exposes the EFI image as a GPT partition for USB boot, -partition_offset 16 makes the
-#    first partition a readable ISO9660 filesystem so the signed GRUB finds /.disk/info on USB too.
+# 5. Hybrid layout (the Ubuntu ISO recipe): the EFI image is appended as a real GPT EFI
+#    partition (USB firmware boots it) and is also the El Torito image (DVD/VM boot);
+#    -partition_offset 16 makes the first partition a readable ISO9660 filesystem, so the
+#    signed GRUB finds /.disk/info when booted from a USB stick, not only from a DVD.
 efi_kib=$(( ($(du -sk "$T/EFI" | cut -f1)) + 2048 ))
-mkfs.vfat -C -n LAZARUS_EFI -i 7C0FFEE1 --invariant "$T/boot/grub/efi.img" "$efi_kib" >/dev/null
-mmd -i "$T/boot/grub/efi.img" ::/EFI ::/EFI/BOOT
-mcopy -i "$T/boot/grub/efi.img" -m "$T"/EFI/BOOT/* ::/EFI/BOOT/
+mkfs.vfat -C -n LAZARUS_EFI -i 7C0FFEE1 --invariant "$O/efiboot.img" "$efi_kib" >/dev/null
+mmd -i "$O/efiboot.img" ::/EFI ::/EFI/BOOT
+mcopy -i "$O/efiboot.img" -m "$T"/EFI/BOOT/* ::/EFI/BOOT/
 find "$T" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
-xorriso -as mkisofs -quiet -iso-level 3 -J -joliet-long -r -V TRACKC_LIVE \
-  -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -partition_offset 16 \
+xorriso -as mkisofs -quiet -iso-level 3 -J -joliet-long -r -V TRACKC_LIVE -partition_offset 16 \
+  -append_partition 2 0xef "$O/efiboot.img" -appended_part_as_gpt \
+  -e --interval:appended_partition_2:all:: -no-emul-boot \
   -o "$O/trackc-gpu-appliance.iso" "$T"
 rm -rf "$T" "$O/efiboot.img"
 (cd "$O" && sha256sum trackc-gpu-appliance.iso > SHA256SUMS)
