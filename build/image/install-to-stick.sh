@@ -13,7 +13,7 @@ REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 HOST=${1:?host}; VARIANT=${2:?variant}; WIPE=${3:-}
 O="$REPO/out/$VARIANT"
 SERIAL=03018820042024224003
-S=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes "trackc@$HOST")
+S=(ssh -i "$HOME/.ssh/trackc_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=error "trackc@$HOST")  # lab LAN: baseline and appliance alternate on the same IPs
 [[ -f $O/rootfs.squashfs && -f $O/trackc.efi ]] || { echo "build $VARIANT first" >&2; exit 1; }
 
 "${S[@]}" sudo bash -s "$SERIAL" "$WIPE" <<'REMOTE_PART'
