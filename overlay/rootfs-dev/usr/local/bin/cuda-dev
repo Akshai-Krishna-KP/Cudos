@@ -45,6 +45,10 @@ case "$here/" in
 esac
 [ $# -gt 0 ] || set -- bash
 tty=; [ -t 0 ] && [ -t 1 ] && tty=-it
+# No --userns=keep-id: in rootless Podman, root inside the container IS your own user outside
+# (files in ~/cuda stay yours), and keep-id would force a slow re-owned copy of the whole
+# toolkit image (minutes on a USB stick) after every lazarus-install. Still: no capabilities,
+# no-new-privileges, no network.
 exec podman --log-level=error run --rm $tty --cgroups=disabled --network=none --cap-drop=all \
-  --security-opt=no-new-privileges --userns=keep-id --device nvidia.com/gpu=all \
+  --security-opt=no-new-privileges --device nvidia.com/gpu=all \
   -v "$W:/work" -w "/work$rel" -e HOME=/work "$(current_img)" "$@"

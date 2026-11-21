@@ -27,7 +27,7 @@ TRACKC-SELFTEST RESULT PASS
   Network: 127.0.1.1
   Log in, then:  cuda-dev (compile + run CUDA)  gpu-status  gpu-watch  gpu-bench
 
-trackc login: gpu (automatic login)
+trackc login: lazarus (automatic login)
 
 Linux trackc 6.12.118-trackc #1 SMP PREEMPT_DYNAMIC @1794687828 x86_64
 
@@ -40,6 +40,11 @@ Linux trackc 6.12.118-trackc #1 SMP PREEMPT_DYNAMIC @1794687828 x86_64
     cuda-dev ./vec
     cuda-dev                                    # shell with nvcc, cuBLAS, cuRAND, cuFFT
 
+  More CUDA libraries (needs internet):
+    lazarus-list                                # cuDNN, cuSOLVER, cuSPARSE, NCCL, NPP, ... (* = installed)
+    lazarus-install cudnn                       # into your toolkit, not the read-only system
+    lazarus-remove cudnn                        # remove again   (lazarus-reset: remove all)
+
   GPU status:      gpu-status  (live: gpu-watch, Ctrl-C quits)
 
-[?2004hgpu@trackc:~$ 
+[?2004hlazarus@trackc:~$ 
