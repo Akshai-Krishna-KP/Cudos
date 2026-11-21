@@ -11,6 +11,5 @@
     cuda-dev list                               # cuDNN, cuSOLVER, cuSPARSE, NCCL, NPP, ...
     cuda-dev install cudnn                      # into your toolkit, not the read-only system
 
-  GPU status:      nvidia-smi
-  Benchmark loop:  sudo systemctl stop|start trackc-bench   (results: /var/lib/trackc-bench)
+  GPU status:      gpu-status  (live: gpu-watch, Ctrl-C quits; rerun benchmark: gpu-bench)
 
