@@ -7,10 +7,10 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"; ISO=${1:-$REPO/out/iso/trackc-gpu-appl
 RES=$REPO/docs/results/iso; mkdir -p "$RES"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
 fail=0
 for mode in cdrom usb; do
- for attempt in 1 2 3; do
+ for attempt in 1 2 3 4 5 6; do
   cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$W/vars.fd"; L=$RES/qemu-$mode.log; : > "$L"
   if [[ $mode == cdrom ]]; then D=(-cdrom "$ISO")
-  else D=(-drive "file=$ISO,format=raw,if=none,id=u,readonly=on" -device qemu-xhci -device usb-storage,drive=u); fi
+  else D=(-drive "file=$ISO,format=raw,if=none,id=u,readonly=on" -device qemu-xhci -device usb-storage,drive=u,bootindex=1); fi
   qemu-system-x86_64 -machine q35,accel=kvm -cpu host -smp 4 -m 6G \
     -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd \
     -drive if=pflash,format=raw,file="$W/vars.fd" "${D[@]}" \

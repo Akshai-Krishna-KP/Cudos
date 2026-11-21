@@ -64,7 +64,8 @@ block on p2; firmware NVRAM is never written).
 
 ```
 UEFI firmware
- └─ (64 GB stick) GRUB ──chainload──> EFI/trackc/trackc.efi      (portable .img / ISO: firmware loads EFI/BOOT/BOOTX64.EFI directly)
+ └─ (64 GB stick) GRUB ──chainload──> EFI/trackc/trackc.efi      (portable .img: firmware loads EFI/BOOT/BOOTX64.EFI directly;
+                                                                  ISO: signed shim -> signed GRUB -> Debian kernel, see docs/iso.md)
      UKI = kernel 6.12.118-trackc + initramfs + command line
        root=PARTLABEL=trackc-root rootfstype=squashfs ro quiet modprobe.blacklist=nouveau systemd.gpt_auto=0
      initramfs (initramfs-tools, MODULES=most + squashfs/overlay/ext4)
@@ -248,7 +249,7 @@ x86 + CUDA packaging); Docker rejected (root daemon); full CUDA toolkit on the h
 | **release** | graded, measured image | no login users, no network services | 719 MiB (squashfs 697 + UKI 22), 170 packages |
 | **dev** | the 64 GB measurement stick on Laptop 2 | `lazarus` (sudo), lab hotspots, SSH key-only, `cuda-dev`, `lazarus` | ~776 MiB, ~208 packages |
 | **portable** `.img` | shareable flashable image (`out/portable/trackc-gpu-appliance.img`, 3.6 GB; `.img.zst` 2.7 GB) | auto-login `lazarus` (no sudo), Wi-Fi/SSH only from files on the stick, toolkit preloaded, grows to fill the stick | |
-| **ISO** | live medium (`out/iso/trackc-gpu-appliance.iso`, 2.8 GB) | as portable, state in RAM | |
+| **ISO** | live medium for other laptops (`out/iso/trackc-gpu-appliance.iso`, 2.9 GB) | as portable, state in RAM; **Debian full kernel + Debian-signed shim/GRUB/kernel** (boots with Secure Boot on or off; GPU needs Secure Boot off) | |
 
 ## 11. Testing and verification
 
@@ -288,7 +289,7 @@ CUDA kernel, 971× with cuBLAS; Monte Carlo π 1,275×; nvJPEG 1080p encode 8.4 
 | Blank screen after boot | fixed: `nvidia-drm modeset=0 fbdev=0` (panel on the iGPU) |
 | SSH "Permission denied" | key-only by design: `ssh -i ~/.ssh/trackc_ed25519 lazarus@<ip>`; the IP changes between boots (hotspot DHCP) |
 | Laptop 2 not reachable | it only knows the configured hotspots; changes to `/etc` (Wi-Fi) last until reboot; permanent: rebuild with `cache/wifi.env` |
-| ISO on real hardware | boots in QEMU as CD and USB; on Laptop 2 the USB stick was not found during early boot (under investigation, use the `.img`) |
+| ISO with Secure Boot on | boots; NVIDIA driver blocked (unsigned); banner explains; turn Secure Boot off for the GPU |
 
 Known limitations: Secure Boot off (no signing, by decision); tested on Laptop 2 only
 (Laptop 1 by hand, `docs/laptop1-test.md`); kernel packages not yet bit-identical between

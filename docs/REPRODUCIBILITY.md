@@ -57,13 +57,12 @@ build/container/build-cudadev-image.sh   # -> out/trackc-cuda-dev.tar   (cuda-de
 
 # 3. Kernels (pinned builder container, ~5 min each)
 build/kernel/run.sh                      # -> out/kernel/      (laptop kernel, on the sticks)
-build/kernel/run.sh iso                  # -> out/kernel-iso/  (+ CD/SATA/USB2/loop drivers)
 
 # 4. Root filesystems + images
 build/builder.sh build/rootfs/build-rootfs.sh release trackc && build/builder.sh build/image/build-image.sh release
 build/builder.sh build/rootfs/build-rootfs.sh dev trackc     && build/builder.sh build/image/build-image.sh dev
 build/builder.sh build/rootfs/build-rootfs.sh portable trackc && build/builder.sh build/image/build-image.sh portable
-build/builder.sh build/rootfs/build-rootfs.sh portable trackc-iso && build/builder.sh build/image/build-iso.sh
+build/builder.sh build/rootfs/build-rootfs.sh portable debian-iso && build/builder.sh build/image/build-iso.sh   # ISO: Debian kernel + signed shim/GRUB
 # (each rootfs build leaves out/rootfs-<variant>; remove it after the image step:
 #  podman unshare rm -rf out/rootfs-<variant>)
 
@@ -78,7 +77,7 @@ Outputs:
 | Release image (graded, measured) | `out/release/{rootfs.squashfs,trackc.efi,sizes.txt,packages.tsv}` |
 | Dev image (64 GB measurement stick) | `out/dev/…` |
 | Portable flashable image | `out/portable/trackc-gpu-appliance.img` (+ `.img.zst`, `SHA256SUMS`) |
-| Live ISO | `out/iso/trackc-gpu-appliance.iso` (+ `SHA256SUMS`) |
+| Live ISO (other laptops) | `out/iso/trackc-gpu-appliance.iso` (+ `SHA256SUMS`) |
 
 dev only: needs `cache/wifi.env` and `out/dev-secrets/authorized_keys` (section 1).
 

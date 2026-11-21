@@ -24,9 +24,9 @@ e09f149328290751c994b67999194d0df7a65e8bf90bf608b645f956c676ac9c  trackc-gpu-app
 3595567104 out/portable/trackc-gpu-appliance.img
 2663568910 out/portable/trackc-gpu-appliance.img.zst
 
-## Live ISO
-befd3d89554e0437b57705ac753f0215ce03bbe99eeebbea893ac122bac80e14  trackc-gpu-appliance.iso
-2846052352 out/iso/trackc-gpu-appliance.iso
+## Live ISO (Debian kernel, signed shim/GRUB)
+0848ce5de130e28b5fd02cd7e8412fdd23d8b10817ad179789df9c08e6316ef4  trackc-gpu-appliance.iso
+2935566336 out/iso/trackc-gpu-appliance.iso
 
 ## Kernel packages
 591a3603fd2a27243839f825e10cdcaf540fd0e7c83eaf2b879b83ff0b24abdb  linux-headers-6.12.118-trackc_6.12.118-1_amd64.deb
