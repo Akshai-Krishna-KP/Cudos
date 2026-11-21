@@ -10,7 +10,13 @@ for d in /sys/bus/pci/devices/*; do
 done
 if [ -z "$found" ]; then echo "gpu-autoconfig: no NVIDIA GPU found"; exit 0; fi
 echo "gpu-autoconfig: NVIDIA GPU(s):$found, driver $(modinfo -F version nvidia 2>/dev/null)"
-modprobe nvidia && modprobe nvidia_uvm || { echo "gpu-autoconfig: module load failed"; exit 1; }
+if ! { modprobe nvidia && modprobe nvidia_uvm; }; then
+  sb=$(od -An -t u1 -j4 -N1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c 2>/dev/null | tr -d ' ')
+  # Live ISO on a laptop with Secure Boot on: the Debian-signed kernel refuses our unsigned
+  # NVIDIA modules. Expected; the OS keeps working and gpu-status explains what to do.
+  [ "$sb" = 1 ] && { echo "gpu-autoconfig: Secure Boot is on, NVIDIA driver blocked (turn Secure Boot off for the GPU)"; exit 0; }
+  echo "gpu-autoconfig: module load failed"; exit 1
+fi
 nvidia-ctk system create-device-nodes --control-devices --load-kernel-modules
 nvidia-smi -pm 1 >/dev/null 2>&1 || true
 mkdir -p /run/cdi
