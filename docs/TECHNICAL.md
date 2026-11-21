@@ -256,7 +256,8 @@ x86 + CUDA packaging); Docker rejected (root daemon); full CUDA toolkit on the h
 |---|---|---|
 | Boot + read-only self-test + persistence (QEMU/UEFI) | `test/qemu-smoke.sh` | PASS (dev, portable on an 8 GB virtual stick) |
 | ISO as CD-ROM and as USB stick (QEMU/UEFI) | `test/iso-smoke.sh` | PASS both (an emulated-firmware USB stall is retried and reported) |
-| Acceptance on Laptop 2 (system, read-only root, GPU, hardening, DNS, cuda-dev, lazarus) | `measure/verify-appliance.sh` | see `docs/results/final/verify-laptop2.txt` |
+| Acceptance on Laptop 2 (system, read-only root, GPU, hardening, DNS, cuda-dev, lazarus) | `measure/verify-appliance.sh` | **40/40 PASS** (2026-11-21, `docs/results/final/verify-laptop2.txt`) |
+| `lazarus-install` + GPU programs on Laptop 2 | `docs/results/final/lazarus-laptop2.txt` | nvjpeg installed in 26 s; nvJPEG round trip PASS; matmul agrees with CPU |
 | Reproducibility | two clean release builds | identical squashfs, UKI, package list (`docs/results/phase7/`) |
 | Measurements (5 boots, RAM, 7 GPU runs) | `measure/run-target.sh`, `final-table.py` | `docs/results/phase8/comparison.md` |
 | User code on the GPU | `benchmark/examples/*` via `cuda-dev` | `docs/results/cuda-dev/` |
@@ -282,7 +283,7 @@ CUDA kernel, 971× with cuBLAS; Monte Carlo π 1,275×; nvJPEG 1080p encode 8.4 
 | Symptom | Cause / action |
 |---|---|
 | Benchmark low (~200 GB/s) | laptop on battery, or `nvidia-powerd` not running; plug in the charger |
-| `cuda-dev` / `lazarus` slow on first use | the 3.6 GB toolkit is unpacked onto the USB stick once; cheap sticks write small files at ~1 MB/s. Use a fast USB 3 stick or USB SSD |
+| `cuda-dev` / `lazarus` slow on first use | the 3.6 GB toolkit is unpacked onto the USB stick once (cheap sticks write small files at ~1 MB/s; a fast USB 3 stick or USB SSD helps). Later runs start in ~1.5 s; installs take ~25 s. (`cuda-dev` deliberately does not use `--userns=keep-id`, which would re-own the whole image after every install.) |
 | `lazarus-install` "apt failed" | no internet or DNS; check `getent hosts developer.download.nvidia.com`; try `lazarus-mirror --auto` |
 | Blank screen after boot | fixed: `nvidia-drm modeset=0 fbdev=0` (panel on the iGPU) |
 | SSH "Permission denied" | key-only by design: `ssh -i ~/.ssh/trackc_ed25519 lazarus@<ip>`; the IP changes between boots (hotspot DHCP) |
@@ -293,6 +294,8 @@ Known limitations: Secure Boot off (no signing, by decision); tested on Laptop 2
 (Laptop 1 by hand, `docs/laptop1-test.md`); kernel packages not yet bit-identical between
 kernel rebuilds; containers not `--read-only` (CDI hook); `lazarus` additions are online and
 not part of the reproducible image.
+
+Final artifact sizes and SHA-256 checksums: `docs/results/final/artifacts.txt`.
 
 ## 14. Repository map
 

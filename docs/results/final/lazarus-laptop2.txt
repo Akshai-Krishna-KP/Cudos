@@ -1,0 +1,21 @@
+lazarus: done. Your next cuda-dev commands use it.
+
+real	0m26.448s
+user	0m0.480s
+sys	0m0.375s
+  cuda-cupti-13-5
+  cuda-cupti-dev-13-5
+  cuda-sanitizer-13-5
+  libnvjpeg-13-5
+  libnvjpeg-dev-13-5
+nvJPEG 13.3.2 on NVIDIA GeForce RTX 4060 Laptop GPU
+1920x1080 RGB (6.2 MB) -> JPEG 106 KB  (57x smaller)
+GPU encode 7.17 ms, GPU decode 2.22 ms, quality PSNR 47.6 dB -> PASS
+
+real	0m0.830s
+user	0m0.087s
+sys	0m0.145s
+GPU tiled CUDA kernel             19.21 ms     894.4 GFLOP/s      125x faster
+GPU cuBLAS SGEMM                   1.88 ms    9147.9 GFLOP/s     1274x faster
+
+max |difference| vs CPU: kernel 8.58e-06, cuBLAS 8.58e-06  -> results agree

@@ -1,0 +1,49 @@
+# verify-appliance  2026-11-21T05:59:42+00:00  lazarus@trackc-dev  kernel 6.12.118-trackc
+## System
+PASS  kernel is our 6.12.118-trackc
+PASS  no failed systemd units
+PASS  login user is lazarus
+PASS  password 'lazarus' accepted (sudo -S)
+## Read-only root + overlays (hardening 1)
+PASS  root is squashfs
+PASS  root mounted ro
+PASS  write to / refused
+PASS  /etc and /var are overlays
+PASS  /tmp nodev
+PASS  /tmp nosuid
+PASS  /tmp noexec
+PASS  /var/tmp nodev
+PASS  /var/tmp nosuid
+PASS  /var/tmp noexec
+PASS  /home nodev
+PASS  /home nosuid
+PASS  /home noexec
+PASS  boot self-test RESULT PASS
+## GPU auto-configuration
+PASS  gpu-autoconfig active
+PASS  NVIDIA GPU visible (nvidia-smi)
+PASS  open kernel module 620.70.06 loaded
+PASS  persistence mode on
+PASS  Dynamic Boost (nvidia-powerd) active
+PASS  CDI spec generated
+PASS  boot health-check benchmark result present
+PASS  health check ran as non-root user bench
+## Hardening 2-5
+PASS  sysctl kptr_restrict=2
+PASS  sysctl dmesg_restrict=1
+PASS  sysctl unprivileged_bpf_disabled=1
+PASS  sysctl yama ptrace_scope=2
+PASS  nftables input policy drop
+PASS  SSH: no passwords, no root login
+PASS  no compiler on the host system
+PASS  internal NVMe disks read-only
+## Network
+PASS  DNS resolves (systemd-resolved)
+## Your own CUDA code (cuda-dev)
+PASS  cuda-dev nvcc compiles vector_add.cu
+PASS  program runs on the GPU (PASS)
+## lazarus package manager
+PASS  lazarus-list shows the NVIDIA mirror
+PASS  lazarus-list --local shows curated list
+PASS  lazarus-mirror shows mirrors
+## Summary: 40 passed, 0 failed

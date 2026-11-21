@@ -1,0 +1,33 @@
+# Final artifacts 2026-11-21T11:31:05+05:30  git=e4a6e30
+
+## Release image (graded, measured)
+rootfs_uncompressed_MiB=1192.2
+squashfs_MiB=696.6
+uki_MiB=22.3   # kernel+initrd+cmdline on the ESP
+medium_total_MiB=718.9   # UKI + squashfs (container archive included)
+bench_container_archive_MiB=466.0   # inside the squashfs
+dpkg_packages=170
+non_dpkg_components=nvidia open kernel modules (5 .ko), nvidia-smi binary, trackc-bench OCI archive
+52d934a2b1b73b63b7e69758ec4db4f412e292a1bb311ba24a409969463dba6a  rootfs.squashfs
+7a62fc79d61f4245e4cc009a6b935d14477ce8e464aa271d09f2e18b73784e17  trackc.efi
+6c10a2ba0266621c656aa5c98163f6c5523b046e59c3dee14aec9c1cc748e17d  packages.tsv
+
+## Dev image (64 GB stick on Laptop 2)
+medium_total_MiB=776.2   # UKI + squashfs (container archive included)
+dpkg_packages=207
+bbb9125f7402a347058d411d2e13c56bd518bc418d222ca7991f76dcadc2cfe3  rootfs.squashfs
+500df5ab8dd5be87bf223d07f7a3fd158ce08c7ce10c62e63fe22800bf0303f1  trackc.efi
+
+## Portable image
+e09f149328290751c994b67999194d0df7a65e8bf90bf608b645f956c676ac9c  trackc-gpu-appliance.img
+943c8484e92c03e3743dbc5e29ba051acad2da97a3a2357921a2dcae4f8616e1  trackc-gpu-appliance.img.zst
+3595567104 out/portable/trackc-gpu-appliance.img
+2663568910 out/portable/trackc-gpu-appliance.img.zst
+
+## Live ISO
+befd3d89554e0437b57705ac753f0215ce03bbe99eeebbea893ac122bac80e14  trackc-gpu-appliance.iso
+2846052352 out/iso/trackc-gpu-appliance.iso
+
+## Kernel packages
+591a3603fd2a27243839f825e10cdcaf540fd0e7c83eaf2b879b83ff0b24abdb  linux-headers-6.12.118-trackc_6.12.118-1_amd64.deb
+ed153d2b1920aa7f19ec04e271abc636d2930eb335c144fc217289f43856a1e2  linux-image-6.12.118-trackc_6.12.118-1_amd64.deb
